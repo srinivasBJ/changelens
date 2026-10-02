@@ -23,6 +23,7 @@ export interface Change {
   source: string;
   raw_event_ref?: string;
   account_id?: string;
+  is_live?: boolean;
 }
 
 export interface Actor {
@@ -168,6 +169,9 @@ export interface InvestigationCase {
   hypothesis?: string;
   recommended_actions: string[];
   data_mode: 'live' | 'demo';
+  operational_state?: string;
+  latest_telemetry_timestamp?: string;
+  current_window_anomalies_count?: number;
 }
 
 export interface DashboardStats {

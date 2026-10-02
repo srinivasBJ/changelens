@@ -252,6 +252,7 @@ class AWSAdapter:
                     source="cloudtrail",
                     raw_event_ref=event.get("EventId", ""),
                     account_id=event.get("AccountId"),
+                    is_live=True,
                 )
                 changes.append(change)
 

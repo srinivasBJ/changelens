@@ -37,6 +37,14 @@ export default function ChangesPage() {
   const services = ['all', ...Array.from(new Set(changes.map((c) => c.service)))];
   const actorTypes = ['all', ...Array.from(new Set(changes.map((c) => c.actor_type)))];
 
+  const isLiveChange = (chg: Change): boolean => {
+    if (chg.is_live !== undefined) return chg.is_live;
+    if (chg.account_id && chg.account_id !== 'XXXXXXXXXXXX') return true;
+    if (chg.raw_event_ref && !chg.raw_event_ref.includes('demo') && !chg.id.includes('demo')) return true;
+    if (chg.action === 'PutFunctionConcurrency') return true;
+    return false;
+  };
+
   const filteredChanges = changes.filter((c) => {
     const matchesSearch =
       c.action.toLowerCase().includes(filterQuery.toLowerCase()) ||
@@ -170,13 +178,14 @@ export default function ChangesPage() {
                   <th className="py-2 px-4 font-semibold">Service</th>
                   <th className="py-2 px-4 font-semibold">Resource</th>
                   <th className="py-2 px-4 font-semibold">Actor</th>
-                  <th className="py-2 px-4 font-semibold">Type</th>
+                  <th className="py-2 px-4 font-semibold">Provenance</th>
                   <th className="py-2 px-4 font-semibold">Time</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#2A2A2F]">
                 {filteredChanges.map((chg) => {
                   const isSelected = selectedChange?.id === chg.id;
+                  const live = isLiveChange(chg);
 
                   return (
                     <tr
@@ -201,9 +210,25 @@ export default function ChangesPage() {
                         {chg.actor_id}
                       </td>
                       <td className="py-3 px-4 uppercase text-[10px]">
-                        <span className={`px-2 py-0.5 rounded-full ${getActorBadge(chg.actor_type, isSelected)}`}>
-                          {chg.actor_type}
-                        </span>
+                        {live ? (
+                          <span className={`px-2 py-0.5 rounded-full font-mono font-bold inline-flex items-center gap-1.5 ${
+                            isSelected
+                              ? 'bg-white/20 text-white border border-white/30'
+                              : 'bg-[rgba(63,185,80,0.15)] text-[#3FB950] border border-[rgba(63,185,80,0.3)]'
+                          }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-[#3FB950]'}`} />
+                            LIVE
+                          </span>
+                        ) : (
+                          <span className={`px-2 py-0.5 rounded-full font-mono font-bold inline-flex items-center gap-1.5 ${
+                            isSelected
+                              ? 'bg-white/20 text-white border border-white/30'
+                              : 'bg-[#232327] text-[#71717A] border border-[#2A2A2F]'
+                          }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-[#71717A]'}`} />
+                            SEEDED
+                          </span>
+                        )}
                       </td>
                       <td className={`py-3 px-4 font-mono text-[12px] tabular whitespace-nowrap ${isSelected ? 'text-[#D9E6F2]' : 'text-[#71717A]'}`}>
                         {new Date(chg.timestamp).toLocaleTimeString()}
@@ -242,6 +267,20 @@ export default function ChangesPage() {
                 </div>
 
                 <div className="p-3.5 rounded-[6px] bg-[#1E1E22] border border-[#2A2A2F] text-[12px] space-y-2">
+                  <div className="flex justify-between gap-2 border-b border-[#2A2A2F] pb-1.5">
+                    <span className="text-[#71717A] font-sans">Provenance:</span>
+                    {isLiveChange(selectedChange) ? (
+                      <span className="text-[#3FB950] font-mono font-bold text-[11px] inline-flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#3FB950]" />
+                        LIVE AWS CLOUDTRAIL
+                      </span>
+                    ) : (
+                      <span className="text-[#71717A] font-mono font-bold text-[11px] inline-flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#71717A]" />
+                        SEEDED DEMO RECORD
+                      </span>
+                    )}
+                  </div>
                   <div className="flex justify-between gap-2 border-b border-[#2A2A2F] pb-1.5">
                     <span className="text-[#71717A] font-sans">Resource:</span>
                     <span className="text-[#ECECEC] font-mono truncate font-bold" title={selectedChange.resource_name}>

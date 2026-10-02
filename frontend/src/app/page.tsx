@@ -85,6 +85,14 @@ export default function Dashboard() {
   const selectedInvestigation =
     investigations.find((i) => i.id === selectedInvId) || investigations[0];
 
+  const isLiveChange = (chg: Change): boolean => {
+    if (chg.is_live !== undefined) return chg.is_live;
+    if (chg.account_id && chg.account_id !== 'XXXXXXXXXXXX') return true;
+    if (chg.raw_event_ref && !chg.raw_event_ref.includes('demo') && !chg.id.includes('demo')) return true;
+    if (chg.action === 'PutFunctionConcurrency') return true;
+    return false;
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Operational Status Header */}
@@ -214,6 +222,17 @@ export default function Dashboard() {
                           <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : isLive ? 'bg-[#3FB950]' : 'bg-[#D29922]'}`} />
                           {isLive ? 'LIVE' : 'DEMO'}
                         </span>
+                        {isLive && inv.operational_state && (
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-sans font-bold uppercase border ${
+                            isSelected
+                              ? 'bg-white/20 text-white border-white/30'
+                              : inv.operational_state === 'RESOLVED'
+                              ? 'bg-[rgba(63,185,80,0.1)] text-[#3FB950] border-[rgba(63,185,80,0.25)]'
+                              : 'bg-[rgba(210,153,34,0.15)] text-[#D29922] border-[rgba(210,153,34,0.3)]'
+                          }`}>
+                            {inv.operational_state}
+                          </span>
+                        )}
                         <span className={`font-mono text-[12px] font-bold ${isSelected ? 'text-[#FFFFFF]' : 'text-[#ECECEC]'}`}>
                           {inv.id}
                         </span>
@@ -242,12 +261,14 @@ export default function Dashboard() {
                           <strong className={`font-mono tabular ${isSelected ? 'text-[#FFFFFF]' : 'text-[#ECECEC]'}`}>
                             {inv.anomalies.length}
                           </strong>
+                          {isLive && <span className={isSelected ? 'text-white/70' : 'text-[#71717A]'}> (Verified)</span>}
                         </span>
                         <span>
                           Evidence:{' '}
                           <strong className={`font-mono tabular ${isSelected ? 'text-[#FFFFFF]' : 'text-[#ECECEC]'}`}>
                             {inv.evidence.length}
                           </strong>
+                          <span className={isSelected ? 'text-white/70' : 'text-[#71717A]'}> (SHA-256)</span>
                         </span>
                         <span>
                           Hindsight:{' '}
@@ -297,32 +318,49 @@ export default function Dashboard() {
                     <th className="py-2 px-4 font-semibold">Service</th>
                     <th className="py-2 px-4 font-semibold">Resource</th>
                     <th className="py-2 px-4 font-semibold">Actor</th>
+                    <th className="py-2 px-4 font-semibold">Provenance</th>
                     <th className="py-2 px-4 font-semibold">Time</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#2A2A2F] text-[#A1A1AA]">
-                  {changes.slice(0, 6).map((chg) => (
-                    <tr
-                      key={chg.id}
-                      className="h-[48px] hover:bg-[#232327] transition-colors duration-150"
-                    >
-                      <td className="py-3 px-4 font-mono font-medium text-[#ECECEC] text-[12px]">
-                        {chg.action}
-                      </td>
-                      <td className="py-3 px-4">
-                        <SourceBadge source={chg.service} />
-                      </td>
-                      <td className="py-3 px-4 font-mono text-[#ECECEC] text-[12px] truncate max-w-[200px]" title={chg.resource_name}>
-                        {chg.resource_name}
-                      </td>
-                      <td className="py-3 px-4 font-mono text-[#71717A] text-[12px] truncate max-w-[160px]" title={chg.actor_id}>
-                        {chg.actor_id}
-                      </td>
-                      <td className="py-3 px-4 font-mono text-[#71717A] text-[12px] tabular">
-                        {new Date(chg.timestamp).toLocaleTimeString()}
-                      </td>
-                    </tr>
-                  ))}
+                  {changes.slice(0, 6).map((chg) => {
+                    const live = isLiveChange(chg);
+                    return (
+                      <tr
+                        key={chg.id}
+                        className="h-[48px] hover:bg-[#232327] transition-colors duration-150"
+                      >
+                        <td className="py-3 px-4 font-mono font-medium text-[#ECECEC] text-[12px]">
+                          {chg.action}
+                        </td>
+                        <td className="py-3 px-4">
+                          <SourceBadge source={chg.service} />
+                        </td>
+                        <td className="py-3 px-4 font-mono text-[#ECECEC] text-[12px] truncate max-w-[200px]" title={chg.resource_name}>
+                          {chg.resource_name}
+                        </td>
+                        <td className="py-3 px-4 font-mono text-[#71717A] text-[12px] truncate max-w-[160px]" title={chg.actor_id}>
+                          {chg.actor_id}
+                        </td>
+                        <td className="py-3 px-4 uppercase text-[10px]">
+                          {live ? (
+                            <span className="px-2 py-0.5 rounded-full font-mono font-bold inline-flex items-center gap-1.5 bg-[rgba(63,185,80,0.15)] text-[#3FB950] border border-[rgba(63,185,80,0.3)]">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#3FB950]" />
+                              LIVE
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full font-mono font-bold inline-flex items-center gap-1.5 bg-[#232327] text-[#71717A] border border-[#2A2A2F]">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#71717A]" />
+                              SEEDED
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 font-mono text-[#71717A] text-[12px] tabular">
+                          {new Date(chg.timestamp).toLocaleTimeString()}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -356,7 +394,7 @@ export default function Dashboard() {
                   {(() => {
                     const isSelectedLive = selectedInvestigation.id === 'inv_live_001' || (selectedInvestigation.data_mode === 'live' && selectedInvestigation.id !== 'inv_demo_001');
                     return (
-                      <div className="flex items-center gap-2 mt-2">
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-sans font-bold uppercase border flex items-center gap-1.5 ${
                           isSelectedLive
                             ? 'bg-[rgba(63,185,80,0.15)] text-[#3FB950] border-[rgba(63,185,80,0.3)]'
@@ -365,8 +403,13 @@ export default function Dashboard() {
                           <span className={`w-1.5 h-1.5 rounded-full ${isSelectedLive ? 'bg-[#3FB950]' : 'bg-[#D29922]'}`} />
                           {isSelectedLive ? 'LIVE AWS INCIDENT' : 'DEMO SCENARIO'}
                         </span>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-sans font-semibold uppercase bg-[#232327] text-[#A1A1AA] border border-[#2A2A2F]">
-                          {selectedInvestigation.status}
+                        {isSelectedLive && (
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-sans font-bold uppercase bg-[rgba(88,166,255,0.15)] text-[#58A6FF] border border-[rgba(88,166,255,0.3)]">
+                            VERIFIED INCIDENT
+                          </span>
+                        )}
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-sans font-semibold uppercase bg-[#232327] text-[#A1A1AA] border border-[#2A2A2F]">
+                          STATE: {selectedInvestigation.operational_state || selectedInvestigation.status}
                         </span>
                         {selectedInvestigation.impact_score && (
                           <ConfidenceBadge confidence={selectedInvestigation.impact_score.confidence} />

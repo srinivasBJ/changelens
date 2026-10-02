@@ -65,6 +65,7 @@ class Change(BaseModel):
     source: str = "cloudtrail"
     raw_event_ref: Optional[str] = None
     account_id: Optional[str] = None
+    is_live: bool = False
 
 
 class Actor(BaseModel):
@@ -245,6 +246,9 @@ class InvestigationCase(BaseModel):
     hypothesis: Optional[str] = None
     recommended_actions: List[str] = Field(default_factory=list)
     data_mode: str = "demo"  # "live" or "demo"
+    operational_state: Optional[str] = "RESOLVED"  # ACTIVE, IMPACT_OBSERVED, INVESTIGATING, RESOLVED
+    latest_telemetry_timestamp: Optional[datetime] = None
+    current_window_anomalies_count: int = 0
 
 
 # --- Response Models ---
