@@ -28,7 +28,9 @@ from app.models.core import (
     Change,
     DashboardStats,
     EvidenceArtifact,
+    EvidenceCategory,
     EvidencePack,
+    ImpactEdge,
     InvestigationCase,
     OperationalMemory,
     TimelineEvent,
@@ -127,14 +129,167 @@ class InvestigationService:
         """Get details for a specific change."""
         return self._changes.get(change_id)
 
+    async def _sync_live_aws_data(self):
+        """Query live CloudTrail and CloudWatch telemetry for checkout-function, checkout-table, and API Gateway."""
+        if not (settings.is_live and self.aws_adapter.is_available):
+            return
+
+        try:
+            # 1. Fetch real CloudTrail changes
+            live_changes = await self.aws_adapter.get_recent_cloudtrail_events(minutes=180)
+            for chg in live_changes:
+                self._changes[chg.id] = chg
+
+            # 2. Fetch real CloudWatch anomalies
+            lambda_anomalies = await self.aws_adapter.get_lambda_metrics(settings.demo_function_name, minutes=60)
+            api_anomalies = await self.aws_adapter.get_api_gateway_metrics(settings.demo_api_name, minutes=60)
+            ddb_anomalies = await self.aws_adapter.get_dynamodb_metrics(settings.demo_table_name, minutes=60)
+
+            all_anomalies = lambda_anomalies + api_anomalies + ddb_anomalies
+
+            if live_changes or all_anomalies:
+                most_recent_change = live_changes[0] if live_changes else next(iter(self._changes.values()), None)
+                trigger_id = most_recent_change.id if most_recent_change else "live_trigger"
+
+                edges = [
+                    ImpactEdge(
+                        source=settings.demo_function_name,
+                        target=settings.demo_api_name,
+                        relationship="invoked_by",
+                        weight=0.9,
+                        evidence=["API Gateway route POST /checkout integration"],
+                        hop_distance=1,
+                    ),
+                    ImpactEdge(
+                        source=settings.demo_function_name,
+                        target=settings.demo_table_name,
+                        relationship="writes_to",
+                        weight=0.85,
+                        evidence=["Lambda environment variable TABLE_NAME (checkout-table)"],
+                        hop_distance=1,
+                    ),
+                ]
+
+                # Recalled memories from Hindsight (or fallback)
+                query = f"{settings.demo_function_name} {settings.demo_table_name} throttling error"
+                historical_memories = await self.memory_provider.recall(query=query, limit=3)
+
+                # Correlation impact score
+                impact_score = None
+                if most_recent_change and all_anomalies:
+                    impact_score = self.correlation_engine.calculate_impact_score(
+                        change=most_recent_change,
+                        anomalies=all_anomalies,
+                        edges=edges,
+                        memories=historical_memories,
+                    )
+
+                # Evidence artifacts with SHA-256 hashes
+                now = datetime.now(timezone.utc)
+                evidence = []
+                if most_recent_change:
+                    ev_chg = EvidenceArtifact(
+                        case_id="inv_live_001",
+                        timestamp=most_recent_change.timestamp,
+                        source="cloudtrail",
+                        category=EvidenceCategory.CHANGE,
+                        summary=f"CloudTrail event {most_recent_change.action} on {most_recent_change.resource_name} by {most_recent_change.actor_id}",
+                        raw_reference=most_recent_change.raw_event_ref,
+                    )
+                    ev_chg.compute_hash()
+                    evidence.append(ev_chg)
+
+                for anm in all_anomalies:
+                    ev_anm = EvidenceArtifact(
+                        case_id="inv_live_001",
+                        timestamp=anm.timestamp,
+                        source="cloudwatch",
+                        category=EvidenceCategory.TELEMETRY,
+                        summary=f"CloudWatch anomaly: {anm.resource_name} {anm.metric_name} deviated {anm.deviation_pct:+.1f}% from baseline",
+                        raw_reference=f"cloudwatch:{anm.metric_namespace}:{anm.metric_name}",
+                    )
+                    ev_anm.compute_hash()
+                    evidence.append(ev_anm)
+
+                # Build timeline
+                timeline = []
+                if most_recent_change:
+                    timeline.append(
+                        TimelineEvent(
+                            timestamp=most_recent_change.timestamp,
+                            lane="CHANGE",
+                            title=f"CloudTrail: {most_recent_change.action}",
+                            description=f"Action {most_recent_change.action} executed on {most_recent_change.resource_name} by {most_recent_change.actor_id}.",
+                            source="cloudtrail",
+                            category=EvidenceCategory.CHANGE,
+                        )
+                    )
+
+                for anm in all_anomalies:
+                    timeline.append(
+                        TimelineEvent(
+                            timestamp=anm.timestamp,
+                            lane="TELEMETRY",
+                            title=f"CloudWatch Anomaly: {anm.metric_name} ({anm.deviation_pct:+.0f}%)",
+                            description=f"{anm.resource_name} metric {anm.metric_name} changed from {anm.baseline_value} to {anm.anomaly_value}.",
+                            source="cloudwatch",
+                            category=EvidenceCategory.TELEMETRY,
+                        )
+                    )
+
+                for mem in historical_memories:
+                    timeline.append(
+                        TimelineEvent(
+                            timestamp=mem.timestamp,
+                            lane="HISTORICAL_MEMORY",
+                            title=f"Hindsight Memory: {mem.incident_type}",
+                            description=f"Prior pattern: {mem.telemetry_signature}. Outcome: {mem.outcome}.",
+                            source="hindsight",
+                            category=EvidenceCategory.HISTORICAL_MEMORY,
+                            is_historical=True,
+                        )
+                    )
+
+                live_inv = InvestigationCase(
+                    id="inv_live_001",
+                    title=f"Live Incident: {settings.demo_function_name} Impact Analysis",
+                    status="active",
+                    created_at=now,
+                    updated_at=now,
+                    trigger_change_id=trigger_id,
+                    changes=live_changes or ([most_recent_change] if most_recent_change else []),
+                    anomalies=all_anomalies,
+                    business_metrics=[],
+                    impact_edges=edges,
+                    evidence=evidence,
+                    agent_actions=[],
+                    approvals=[],
+                    timeline=timeline,
+                    impact_score=impact_score,
+                    historical_memories=historical_memories,
+                    hypothesis=impact_score.explanation if impact_score else "Live telemetry gathered; evaluating correlation.",
+                    recommended_actions=[
+                        f"Check CloudWatch alarms for {settings.demo_function_name}",
+                        f"Verify {settings.demo_table_name} provisioned/on-demand capacity",
+                        f"Inspect API Gateway {settings.demo_api_name} 5xx error distribution",
+                    ],
+                    data_mode="live",
+                )
+                self._investigations["inv_live_001"] = live_inv
+
+        except Exception as e:
+            logger.error("Failed to sync live AWS data: %s", e)
+
     async def list_investigations(self) -> List[InvestigationCase]:
         """List all tracked investigations."""
+        await self._sync_live_aws_data()
         invs = list(self._investigations.values())
         invs.sort(key=lambda x: x.created_at, reverse=True)
         return invs
 
     async def get_investigation(self, investigation_id: str) -> Optional[InvestigationCase]:
         """Retrieve full details of an investigation."""
+        await self._sync_live_aws_data()
         return self._investigations.get(investigation_id)
 
     async def get_timeline(self, investigation_id: str) -> List[TimelineEvent]:

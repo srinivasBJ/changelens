@@ -28,9 +28,9 @@ class Settings(BaseSettings):
     backend_host: str = "0.0.0.0"
 
     # Demo workload
-    demo_function_name: str = "changelens-checkout-function"
+    demo_function_name: str = "checkout-function"
     demo_api_name: str = "changelens-checkout-api"
-    demo_table_name: str = "changelens-orders"
+    demo_table_name: str = "checkout-table"
 
     @property
     def is_demo(self) -> bool:

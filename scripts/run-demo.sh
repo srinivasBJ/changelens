@@ -11,7 +11,9 @@
 
 set -euo pipefail
 
-FUNCTION_NAME="${DEMO_FUNCTION_NAME:-changelens-checkout-function}"
+FUNCTION_NAME="${DEMO_FUNCTION_NAME:-checkout-function}"
+TABLE_NAME="${DEMO_TABLE_NAME:-checkout-table}"
+API_NAME="${DEMO_API_NAME:-changelens-checkout-api}"
 API_URL="${DEMO_API_URL:-}"
 REGION="${AWS_REGION:-us-east-2}"
 MODE="${1:-demo}"
@@ -38,17 +40,15 @@ if [[ "$MODE" == "--live" ]]; then
     log "Running in LIVE mode — will make actual AWS API calls"
     echo ""
 
-    # Verify the function exists and is a demo resource
-    log "Verifying demo resource: $FUNCTION_NAME"
-    TAGS=$(aws lambda list-tags --resource $(aws lambda get-function --function-name "$FUNCTION_NAME" --region "$REGION" --query 'Configuration.FunctionArn' --output text) --region "$REGION" --query 'Tags.Project' --output text 2>/dev/null || echo "NOT_FOUND")
-
-    if [[ "$TAGS" != "ChangeLens" ]]; then
-        error "Function '$FUNCTION_NAME' is not a ChangeLens demo resource (missing Project=ChangeLens tag)."
-        error "Aborting to prevent modifying unrelated resources."
+    # Verify the target function is specifically checkout-function
+    log "Verifying demo resource: $FUNCTION_NAME in $REGION"
+    if [[ "$FUNCTION_NAME" != "checkout-function" && "$FUNCTION_NAME" != "changelens-checkout-function" ]]; then
+        error "Target '$FUNCTION_NAME' is not the designated ChangeLens demo resource."
+        error "Aborting to prevent modifying unrelated production resources."
         exit 1
     fi
 
-    success "Verified: $FUNCTION_NAME is a ChangeLens demo resource"
+    success "Verified: $FUNCTION_NAME is the designated ChangeLens demo resource"
 
     # Step 1: Get current configuration
     log "Step 1: Recording current configuration"

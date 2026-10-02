@@ -277,9 +277,100 @@ class AWSAdapter:
             baseline_start = start_time - timedelta(minutes=minutes)
 
             metrics_to_check = [
+                ("5xx", "AWS/ApiGateway", "Sum"),
                 ("5XXError", "AWS/ApiGateway", "Sum"),
+                ("4xx", "AWS/ApiGateway", "Sum"),
                 ("4XXError", "AWS/ApiGateway", "Sum"),
                 ("Latency", "AWS/ApiGateway", "Average"),
+            ]
+
+            anomalies = []
+            for metric_name, namespace, stat in metrics_to_check:
+                for dim_name in ["ApiName", "ApiId"]:
+                    try:
+                        recent = self.cloudwatch.get_metric_statistics(
+                            Namespace=namespace,
+                            MetricName=metric_name,
+                            Dimensions=[{"Name": dim_name, "Value": api_name}],
+                            StartTime=start_time,
+                            EndTime=end_time,
+                            Period=60,
+                            Statistics=[stat],
+                        )
+
+                        baseline = self.cloudwatch.get_metric_statistics(
+                            Namespace=namespace,
+                            MetricName=metric_name,
+                            Dimensions=[{"Name": dim_name, "Value": api_name}],
+                            StartTime=baseline_start,
+                            EndTime=start_time,
+                            Period=60,
+                            Statistics=[stat],
+                        )
+
+                        recent_points = recent.get("Datapoints", [])
+                        baseline_points = baseline.get("Datapoints", [])
+
+                        if not recent_points or not baseline_points:
+                            continue
+
+                        stat_key = stat if stat != "Average" else "Average"
+                        recent_avg = sum(p.get(stat_key, 0) for p in recent_points) / len(recent_points)
+                        baseline_avg = sum(p.get(stat_key, 0) for p in baseline_points) / len(baseline_points)
+
+                        if baseline_avg == 0:
+                            if recent_avg > 0:
+                                deviation_pct = 100.0
+                            else:
+                                continue
+                        else:
+                            deviation_pct = ((recent_avg - baseline_avg) / baseline_avg) * 100
+
+                        if abs(deviation_pct) > 20:
+                            severity = min(abs(deviation_pct) / 500, 1.0)
+                            anomaly = Anomaly(
+                                timestamp=max(recent_points, key=lambda p: p["Timestamp"])["Timestamp"],
+                                resource_id=api_name,
+                                resource_name=api_name,
+                                service="apigateway",
+                                metric_name=metric_name,
+                                metric_namespace=namespace,
+                                baseline_value=round(baseline_avg, 2),
+                                anomaly_value=round(recent_avg, 2),
+                                deviation_pct=round(deviation_pct, 1),
+                                severity=round(severity, 2),
+                            )
+                            anomalies.append(anomaly)
+                            break  # Found datapoints for this metric with this dimension
+                    except ClientError as e:
+                        logger.debug("Failed to get API GW metric %s with %s: %s", metric_name, dim_name, e)
+
+            return anomalies
+
+        except Exception as e:
+            logger.error("API Gateway metrics retrieval failed: %s", e)
+            return []
+
+    async def get_dynamodb_metrics(
+        self, table_name: str, minutes: int = 30
+    ) -> List[Anomaly]:
+        """Retrieve DynamoDB metrics and detect anomalies for checkout-table.
+
+        READ-ONLY: Uses GetMetricStatistics API.
+        """
+        if not self._available:
+            return []
+
+        try:
+            end_time = datetime.now(timezone.utc)
+            start_time = end_time - timedelta(minutes=minutes)
+            baseline_start = start_time - timedelta(minutes=minutes)
+
+            metrics_to_check = [
+                ("ReadThrottleEvents", "AWS/DynamoDB", "Sum"),
+                ("WriteThrottleEvents", "AWS/DynamoDB", "Sum"),
+                ("SystemErrorsForOperations", "AWS/DynamoDB", "Sum"),
+                ("UserErrors", "AWS/DynamoDB", "Sum"),
             ]
 
             anomalies = []
@@ -288,9 +379,7 @@ class AWSAdapter:
                     recent = self.cloudwatch.get_metric_statistics(
                         Namespace=namespace,
                         MetricName=metric_name,
-                        Dimensions=[
-                            {"Name": "ApiName", "Value": api_name}
-                        ],
+                        Dimensions=[{"Name": "TableName", "Value": table_name}],
                         StartTime=start_time,
                         EndTime=end_time,
                         Period=60,
@@ -300,9 +389,7 @@ class AWSAdapter:
                     baseline = self.cloudwatch.get_metric_statistics(
                         Namespace=namespace,
                         MetricName=metric_name,
-                        Dimensions=[
-                            {"Name": "ApiName", "Value": api_name}
-                        ],
+                        Dimensions=[{"Name": "TableName", "Value": table_name}],
                         StartTime=baseline_start,
                         EndTime=start_time,
                         Period=60,
@@ -331,9 +418,9 @@ class AWSAdapter:
                         severity = min(abs(deviation_pct) / 500, 1.0)
                         anomaly = Anomaly(
                             timestamp=max(recent_points, key=lambda p: p["Timestamp"])["Timestamp"],
-                            resource_id=api_name,
-                            resource_name=api_name,
-                            service="apigateway",
+                            resource_id=table_name,
+                            resource_name=table_name,
+                            service="dynamodb",
                             metric_name=metric_name,
                             metric_namespace=namespace,
                             baseline_value=round(baseline_avg, 2),
@@ -344,10 +431,10 @@ class AWSAdapter:
                         anomalies.append(anomaly)
 
                 except ClientError as e:
-                    logger.warning("Failed to get API GW metric %s: %s", metric_name, e)
+                    logger.debug("Failed to get DynamoDB metric %s: %s", metric_name, e)
 
             return anomalies
 
         except Exception as e:
-            logger.error("API Gateway metrics retrieval failed: %s", e)
+            logger.error("DynamoDB metrics retrieval failed: %s", e)
             return []
