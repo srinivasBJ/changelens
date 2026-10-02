@@ -30,6 +30,8 @@ from app.models.core import (
     EvidenceArtifact,
     EvidenceCategory,
     EvidencePack,
+    GraphEdge,
+    GraphNode,
     ImpactEdge,
     InvestigationCase,
     OperationalMemory,
@@ -62,6 +64,7 @@ class InvestigationService:
         self._changes: Dict[str, Change] = {}
         self._agent_actions: Dict[str, AgentAction] = {}
         self._approvals: Dict[str, Approval] = {}
+        self._last_live_sync: Optional[datetime] = None
 
         # Initialize with seeded demo data
         self._initialize_demo_state()
@@ -133,6 +136,11 @@ class InvestigationService:
         """Query live CloudTrail and CloudWatch telemetry for checkout-function, checkout-table, and API Gateway."""
         if not (settings.is_live and self.aws_adapter.is_available):
             return
+
+        now = datetime.now(timezone.utc)
+        if self._last_live_sync and (now - self._last_live_sync).total_seconds() < 45:
+            return
+        self._last_live_sync = now
 
         try:
             # 1. Fetch real CloudTrail changes
@@ -298,7 +306,7 @@ class InvestigationService:
         if not inv:
             return []
         timeline = list(inv.timeline)
-        timeline.sort(key=lambda x: x.timestamp)
+        timeline.sort(key=lambda x: x.timestamp if x.timestamp.tzinfo else x.timestamp.replace(tzinfo=timezone.utc))
         return timeline
 
     async def get_graph(self, investigation_id: str) -> BlastRadiusGraph:
@@ -307,20 +315,92 @@ class InvestigationService:
         if inv and inv.id == "inv_demo_001":
             return get_demo_blast_radius_graph()
 
-        # Dynamic graph generation if another investigation exists
-        nodes = []
-        edges = []
-        center = "unknown"
+        # Dynamic graph generation from live investigation data
+        nodes: List[GraphNode] = []
+        edges: List[GraphEdge] = []
+        seen_nodes = set()
+
+        center = settings.demo_function_name
         if inv:
             for chg in inv.changes:
                 center = chg.resource_name
-                nodes.append({"id": chg.id, "label": chg.action, "type": "change", "metadata": {"actor": chg.actor_id}})
-                nodes.append({"id": chg.resource_name, "label": chg.resource_name, "type": "resource", "metadata": {"service": chg.service}})
-                edges.append({"source": chg.id, "target": chg.resource_name, "label": "modified", "evidence": ["CloudTrail event"], "weight": 1.0})
+                if chg.id not in seen_nodes:
+                    nodes.append(
+                        GraphNode(
+                            id=chg.id,
+                            label=chg.action,
+                            type="change",
+                            metadata={"actor": chg.actor_id, "timestamp": chg.timestamp.isoformat()},
+                        )
+                    )
+                    seen_nodes.add(chg.id)
 
+                if chg.resource_name not in seen_nodes:
+                    nodes.append(
+                        GraphNode(
+                            id=chg.resource_name,
+                            label=chg.resource_name,
+                            type="resource",
+                            metadata={"service": chg.service},
+                        )
+                    )
+                    seen_nodes.add(chg.resource_name)
+
+                edges.append(
+                    GraphEdge(
+                        source=chg.id,
+                        target=chg.resource_name,
+                        label="modified",
+                        evidence=["CloudTrail event"],
+                        weight=1.0,
+                    )
+                )
+
+            # Add topology impact edges
+            for edge in inv.impact_edges:
+                if edge.source not in seen_nodes:
+                    nodes.append(GraphNode(id=edge.source, label=edge.source, type="resource"))
+                    seen_nodes.add(edge.source)
+                if edge.target not in seen_nodes:
+                    nodes.append(GraphNode(id=edge.target, label=edge.target, type="service"))
+                    seen_nodes.add(edge.target)
+                edges.append(
+                    GraphEdge(
+                        source=edge.source,
+                        target=edge.target,
+                        label=edge.relationship,
+                        evidence=edge.evidence,
+                        weight=edge.weight,
+                    )
+                )
+
+            # Add metric anomalies
             for anm in inv.anomalies:
-                nodes.append({"id": f"metric_{anm.id}", "label": f"{anm.metric_name} ({anm.deviation_pct:+.0f}%)", "type": "metric", "severity": anm.severity})
-                edges.append({"source": anm.resource_name, "target": f"metric_{anm.id}", "label": "telemetry", "evidence": ["CloudWatch metric"], "weight": 0.8})
+                metric_node_id = f"metric_{anm.id}"
+                if metric_node_id not in seen_nodes:
+                    nodes.append(
+                        GraphNode(
+                            id=metric_node_id,
+                            label=f"{anm.metric_name} ({anm.deviation_pct:+.0f}%)",
+                            type="metric",
+                            severity=anm.severity,
+                        )
+                    )
+                    seen_nodes.add(metric_node_id)
+
+                if anm.resource_name not in seen_nodes:
+                    nodes.append(GraphNode(id=anm.resource_name, label=anm.resource_name, type="resource"))
+                    seen_nodes.add(anm.resource_name)
+
+                edges.append(
+                    GraphEdge(
+                        source=anm.resource_name,
+                        target=metric_node_id,
+                        label="telemetry",
+                        evidence=["CloudWatch metric anomaly"],
+                        weight=0.8,
+                    )
+                )
 
         return BlastRadiusGraph(nodes=nodes, edges=edges, center_node=center)
 
