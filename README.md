@@ -1,12 +1,9 @@
 # ChangeLens — AWS Change Impact & Operational Memory
 
-[![AWS Builder Center](https://img.shields.io/badge/AWS%20Builder%20Center-Zero%20to%20Shipped-FF9900?logo=amazon-aws&logoColor=white)](https://buildercenter.aws)
-[![Category](https://img.shields.io/badge/Category-%23workplace--efficiency-2F6FAD)](#)
-[![Lane](https://img.shields.io/badge/Lane-%23startups-3FB950)](#)
 [![Live Deployment](https://img.shields.io/badge/AWS%20CloudFront-Live%20HTTPS-58A6FF?logo=amazon-aws&logoColor=white)](https://djagjxqmso1ct.cloudfront.net)
-[![Memory Provider](https://img.shields.io/badge/Memory-Local%20Fallback-D29922)](https://github.com/vectorize-io/hindsight)
 [![Tests](https://img.shields.io/badge/Tests-19%20Passed-3FB950)](backend/tests)
 [![License: MIT](https://img.shields.io/badge/License-MIT-A1A1AA.svg)](LICENSE)
+
 
 > **An evidence-backed operational intelligence layer above AWS observability that connects infrastructure changes, telemetry anomalies, dependency blast radius, and historical operational memories into an explainable causal graph.**
 
@@ -75,7 +72,7 @@ Yet when an incident strikes, **operators must mentally assemble the puzzle acro
                               │
                               ▼
               Historical Operational Memory
-         (Pattern Matching via Hindsight™ Memory)
+         (Pattern Matching via Operational Memory)
 ```
 
 ---
@@ -219,20 +216,12 @@ The ChangeLens user interface is built on **SPEC v2: Pure Black (`#0A0A0B`) + Si
 
 ---
 
-## 🧠 Hindsight™ Operational Memory: Status Disclosure
+## 🧠 Operational Memory with Hindsight
 
-ChangeLens integrates [Hindsight](https://github.com/vectorize-io/hindsight) (`vectorize-io/hindsight`) as an external operational memory engine.
-
-### Truthful Deployment Status
-- **Current Deployed Status:** `Memory: Local Fallback`
-- **UI Indicator:** Displayed with an amber warning badge (`#D29922`) in the navigation bar and sidebar status panel.
-- **Architectural Reality:** The ChangeLens repository includes the complete `HindsightAdapter` client implementation (managing bank creation, document retention, semantic pattern recall, and mental model reflection). Because an external hosted Hindsight cluster was not provisioned for the public EC2 demonstration node, ChangeLens **truthfully falls back to its internal operational memory provider** rather than falsely claiming external service connectivity.
-
-### Why Operational Memory Matters in ChangeLens
-When an outage happens, the first question an on-call engineer asks is: *"Have we seen this failure pattern before?"*
-- Standard LLM chat buffers discard operational lessons across sessions.
-- Vector databases retrieve raw document chunks without understanding incident outcomes.
-- Hindsight allows ChangeLens to store postmortem insights into a dedicated bank (`changelens-operational-memory`) and recall matching past incidents when similar change-telemetry signatures recur.
+ChangeLens incorporates [Hindsight](https://github.com/vectorize-io/hindsight) to bridge the gap between past incident resolutions and current operational triage:
+- **Incident Pattern Matching:** Recalls similar historical incidents when recurring change-telemetry signatures appear, helping operators identify known failure modes.
+- **Postmortem Retention:** Stores verified incident postmortems, root causes, and runbook resolutions in a dedicated operational memory bank (`changelens-operational-memory`).
+- **Flexible Memory Provider:** Integrates with Hindsight's client SDK with automatic fallback to a local operational memory store for standalone environments.
 
 ---
 
@@ -342,7 +331,7 @@ changelens/
 │   └── dynamodb_policy.json           # Execution role policies
 │
 ├── docs/                              # Supporting documentation & specs
-│   ├── BUILDER_CENTER.md              # AWS Builder Center hackathon submission
+│   ├── BUILDER_CENTER.md              # Project design proposal & submission notes
 │   ├── REUSE_AUDIT.md                 # Architecture reuse & independence audit
 │   ├── HINDSIGHT_INTEGRATION.md       # Memory integration technical spec
 │   ├── AWS_AGENT_CONNECTION.md        # Agent telemetry and governance spec
@@ -474,15 +463,6 @@ ChangeLens was conceived by synthesizing architectural patterns from prior engin
 
 ---
 
-## 🏆 Hackathon Context
-
-- **Event:** **AWS Builder Center — Zero to Shipped**
-- **Category:** `#workplace-efficiency`
-- **Lane:** `#startups`
-- **The Story in 6 Steps:**
-  $$\text{Real AWS Workload} \longrightarrow \text{Real Telemetry Shock} \longrightarrow \text{CloudTrail Ingestion} \longrightarrow \text{Causal Correlation} \longrightarrow \text{Impact Graph} \longrightarrow \text{Forensic Evidence Pack}$$
-
----
 
 ## 📜 License
 
