@@ -19,6 +19,7 @@ import { Change, DashboardStats, InvestigationCase } from '@/lib/types';
 import { StatCard } from '@/components/StatCard';
 import { ConfidenceBadge } from '@/components/ConfidenceBadge';
 import { SourceBadge } from '@/components/SourceBadge';
+import { HoverScrollText } from '@/components/HoverScrollText';
 
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -27,6 +28,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [injecting, setInjecting] = useState(false);
   const [selectedInvId, setSelectedInvId] = useState<string>('inv_live_001');
+  const [hoveredInvId, setHoveredInvId] = useState<string | null>(null);
 
   const loadData = async () => {
     try {
@@ -202,16 +204,27 @@ export default function Dashboard() {
                   <div
                     key={inv.id}
                     onClick={() => setSelectedInvId(inv.id)}
-                    className={`p-4 transition-colors duration-150 cursor-pointer text-[13px] ${
+                    onMouseEnter={() => setHoveredInvId(inv.id)}
+                    onMouseLeave={() => setHoveredInvId(null)}
+                    onFocus={() => setHoveredInvId(inv.id)}
+                    onBlur={() => setHoveredInvId(null)}
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setSelectedInvId(inv.id);
+                      }
+                    }}
+                    className={`p-4 transition-colors duration-150 cursor-pointer text-[13px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#58A6FF] ${
                       isSelected
                         ? 'bg-[#2F6FAD] text-[#FFFFFF]'
                         : 'bg-[#17171A] hover:bg-[#232327] text-[#A1A1AA]'
                     }`}
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                      <div className="flex items-center gap-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
                         <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-sans font-bold tracking-wider border flex items-center gap-1.5 ${
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-sans font-bold tracking-wider border shrink-0 flex items-center gap-1.5 ${
                             isSelected
                               ? 'bg-white/20 text-white border-white/30'
                               : isLive
@@ -223,7 +236,7 @@ export default function Dashboard() {
                           {isLive ? 'LIVE' : 'DEMO'}
                         </span>
                         {isLive && inv.operational_state && (
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-sans font-bold uppercase border ${
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-sans font-bold uppercase border shrink-0 ${
                             isSelected
                               ? 'bg-white/20 text-white border-white/30'
                               : inv.operational_state === 'RESOLVED'
@@ -233,13 +246,16 @@ export default function Dashboard() {
                             {inv.operational_state}
                           </span>
                         )}
-                        <span className={`font-mono text-[12px] font-bold ${isSelected ? 'text-[#FFFFFF]' : 'text-[#ECECEC]'}`}>
+                        <span className={`font-mono text-[12px] font-bold shrink-0 ${isSelected ? 'text-[#FFFFFF]' : 'text-[#ECECEC]'}`}>
                           {inv.id}
                         </span>
-                        <span className={isSelected ? 'text-white/40' : 'text-[#71717A]'}>·</span>
-                        <span className={`font-sans font-semibold text-[14px] truncate max-w-[320px] ${isSelected ? 'text-[#FFFFFF]' : 'text-[#ECECEC]'}`}>
-                          {inv.title}
-                        </span>
+                        <span className={`shrink-0 ${isSelected ? 'text-white/40' : 'text-[#71717A]'}`}>·</span>
+                        <HoverScrollText
+                          text={inv.title}
+                          isSelected={isSelected}
+                          isRowHovered={hoveredInvId === inv.id}
+                          className={`font-sans font-semibold text-[14px] ${isSelected ? 'text-[#FFFFFF]' : 'text-[#ECECEC]'}`}
+                        />
                       </div>
 
                       <div className="flex items-center gap-2.5 shrink-0">
