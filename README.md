@@ -1,11 +1,11 @@
 # ChangeLens — AWS Change Impact & Operational Memory
 
 [![Live Deployment](https://img.shields.io/badge/AWS%20CloudFront-Live%20HTTPS-58A6FF?logo=amazon-aws&logoColor=white)](https://djagjxqmso1ct.cloudfront.net)
-[![Tests](https://img.shields.io/badge/Tests-19%20Passed-3FB950)](backend/tests)
+[![Tests](https://img.shields.io/badge/Tests-28%20Passed-3FB950)](backend/tests)
 [![License: MIT](https://img.shields.io/badge/License-MIT-A1A1AA.svg)](LICENSE)
 
 
-> **An evidence-backed operational intelligence layer above AWS observability that connects infrastructure changes, telemetry anomalies, dependency blast radius, and historical operational memories into an explainable causal graph.**
+> **An evidence-backed causal impact layer for AWS operations connecting infrastructure mutations, telemetry anomalies, topological blast radius, and historical operational memories into an auditable investigation.**
 
 ---
 
@@ -18,7 +18,7 @@
 
 ---
 
-## 💡 The Problem
+## 💡 The Problem & Architectural Positioning
 
 AWS provides foundational, high-scale observability:
 - **AWS CloudTrail** logs every control-plane mutation and API call.
@@ -33,7 +33,14 @@ Yet when an incident strikes, **operators must mentally assemble the puzzle acro
 4. Autonomous AI agents and automated CI/CD tools make infrastructure changes without operational governance context.
 5. Hard-won operational lessons from past postmortems remain trapped in stale wikis and tribal memory.
 
-**ChangeLens bridges this operational gap.** It ingests the raw evidence AWS already emits and synthesizes an evidence-backed investigation centered directly on the change.
+**ChangeLens bridges this operational gap as an evidence-backed causal impact layer.** It ingests the raw evidence AWS already emits and synthesizes an evidence-backed investigation centered directly on the change.
+
+### What ChangeLens Is (and Is Not):
+
+- **Not a CloudWatch Dashboard:** CloudWatch displays metric counters; ChangeLens causally links telemetry anomalies back to the initiating control-plane change with temporal delta verification (+29s).
+- **Not Generic Observability:** Generic APM tools monitor execution traces; ChangeLens pinpoints the precise operational configuration change responsible for cascading failure.
+- **Not a Generic Incident Summarizer:** Incident summarizers consume unstructured text and hallucinate; ChangeLens generates deterministic Evidence Packs with SHA-256 cryptographic hashes.
+- **Not a Generic LLM Chatbot:** ChangeLens computes mathematical correlation scores (0.00–1.00) deterministically. Amazon Bedrock (`amazon.nova-lite-v1:0`) operates strictly downstream on structured, verified evidence packs to produce concise operational narratives without modifying scores, timestamps, or topology. AWS remains the immutable source of truth.
 
 ---
 
@@ -89,6 +96,7 @@ Yet when an incident strikes, **operators must mentally assemble the puzzle acro
 7. **Tamper-Evident Evidence Artifacts:** Computes deterministic SHA-256 cryptographic hashes for every telemetry snapshot, change record, and investigation pack to provide forensic auditability.
 8. **Historical Operational Memory:** Integrates [Hindsight](https://github.com/vectorize-io/hindsight) (`retain`, `recall`, `reflect`) to retrieve past incident resolutions and pattern-match operational failure modes.
 9. **Strict Epistemic Separation:** Rigorously segregates **LIVE EVIDENCE** (ground-truth AWS telemetry) from **HISTORICAL MEMORY** (recalled prior patterns) and **INFERENCE** (calibrated hypotheses like *"Likely impact"*). Past memory provides context—it is never asserted as proof of present causality.
+10. **Amazon Bedrock AI-Native Operational Narrative:** Grounded on the deterministic Evidence Pack, ChangeLens invokes Amazon Bedrock (`amazon.nova-lite-v1:0` in `us-east-2`) to synthesize an executive-ready operational assessment. The LLM operates strictly on structured, verified evidence and cannot fabricate events, modify timestamps, or alter deterministic correlation scores. A reliable local fallback provider ensures seamless continuity if Bedrock is disabled.
 
 ---
 

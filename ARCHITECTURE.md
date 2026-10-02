@@ -96,21 +96,23 @@ sequenceDiagram
     participant CL as ChangeLens Core
     participant HS as Hindsight Memory Bank
 
-    Operator->>AWS: Perform configuration change (e.g., reduce concurrency to 1)
-    AWS-->>CT: Log UpdateFunctionConfiguration
+    Operator->>AWS: Perform configuration change (e.g., PutFunctionConcurrency to 1)
+    AWS-->>CT: Log PutFunctionConcurrency
     AWS->>CW: Emit metrics under traffic (Throttles surge +340%)
     
     CL->>CT: Ingest recent changes via LookupEvents
     CL->>CW: Query metric statistics and baseline deviations
     
-    CL->>HS: recall("Lambda UpdateFunctionConfiguration concurrency reduction")
-    HS-->>CL: Return 2 historical incident matches (81% similarity)
+    CL->>HS: recall("Lambda PutFunctionConcurrency concurrency reduction")
+    HS-->>CL: Return historical incident matches (81% similarity)
     
-    CL->>CL: Compute Evidence-Weighted Impact Score (0.87 HIGH)
+    CL->>CL: Compute Evidence-Weighted Impact Score (0.92 HIGH)
     CL->>CL: Generate Blast Radius Path & Multi-Lane Timeline
     CL->>CL: Compute SHA-256 Hashes for Evidence Artifacts
+    CL->>Bedrock: Synthesize Evidence-Grounded Operational Narrative (Nova Lite)
+    Bedrock-->>CL: Structured Operational Narrative JSON
     
-    CL-->>Operator: Display Dashboard: Current Evidence vs. Historical Memory
+    CL-->>Operator: Display Console: Causal Graph, Evidence Pack & AI Narrative
 ```
 
 ---

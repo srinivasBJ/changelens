@@ -149,6 +149,27 @@ export interface TimelineEvent {
   is_historical?: boolean;
 }
 
+export interface InvestigationNarrative {
+  summary: string;
+  observed_change: string;
+  telemetry_evidence: string[];
+  affected_resources: string[];
+  causal_assessment: string;
+  uncertainties: string[];
+  recommended_action: string;
+  evidence_count: number;
+}
+
+export interface NarrativeResult {
+  narrative: InvestigationNarrative;
+  ai_narrative_provider: 'bedrock' | 'local_fallback' | string;
+  status: 'BEDROCK_AVAILABLE' | 'BEDROCK_DISABLED' | 'BEDROCK_ERROR' | 'FALLBACK_USED' | string;
+  model_id?: string;
+  region?: string;
+  latency_ms?: number;
+  generated_at: string;
+}
+
 export interface InvestigationCase {
   id: string;
   title: string;
@@ -172,6 +193,8 @@ export interface InvestigationCase {
   operational_state?: string;
   latest_telemetry_timestamp?: string;
   current_window_anomalies_count?: number;
+  ai_narrative?: NarrativeResult;
+  ai_narrative_provider?: string;
 }
 
 export interface DashboardStats {

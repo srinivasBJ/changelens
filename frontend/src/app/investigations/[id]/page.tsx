@@ -19,6 +19,7 @@ import {
   getGraph,
   getInvestigation,
   getMemory,
+  getNarrative,
   getTimeline,
 } from '@/lib/api';
 import {
@@ -26,6 +27,7 @@ import {
   EvidenceArtifact,
   EvidencePack,
   InvestigationCase,
+  NarrativeResult,
   OperationalMemory,
   TimelineEvent,
 } from '@/lib/types';
@@ -49,22 +51,29 @@ export default function InvestigationDetailPage() {
   const [loading, setLoading] = useState(true);
   const [pack, setPack] = useState<EvidencePack | null>(null);
   const [generatingPack, setGeneratingPack] = useState(false);
+  const [narrativeResult, setNarrativeResult] = useState<NarrativeResult | null>(null);
 
   const loadAll = async () => {
     try {
       setLoading(true);
-      const [i, t, g, e, m] = await Promise.all([
+      const [i, t, g, e, m, n] = await Promise.all([
         getInvestigation(id),
         getTimeline(id),
         getGraph(id),
         getEvidence(id),
         getMemory(id),
+        getNarrative(id).catch(() => null),
       ]);
       setInv(i);
       setTimeline(t);
       setGraph(g);
       setEvidence(e);
       setMemories(m);
+      if (n) {
+        setNarrativeResult(n);
+      } else if (i?.ai_narrative) {
+        setNarrativeResult(i.ai_narrative);
+      }
     } catch (err) {
       console.error('Failed to load investigation details:', err);
     } finally {
@@ -207,6 +216,122 @@ export default function InvestigationDetailPage() {
 
       {/* Impact Score Breakdown Card */}
       {inv.impact_score && <ImpactScoreDisplay score={inv.impact_score} />}
+
+      {/* AI-Native Operational Narrative Card */}
+      {narrativeResult && (
+        <div className="rounded-[10px] bg-[#17171A] border border-[#2A2A2F] p-5 space-y-4 font-sans">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#232327] pb-3.5">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-[6px] bg-[rgba(255,153,0,0.12)] border border-[rgba(255,153,0,0.3)] flex items-center justify-center text-[#FF9900]">
+                <BrainCircuit className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-[14px] font-semibold text-[#ECECEC] tracking-tight">
+                    Operational Narrative
+                  </h3>
+                  {narrativeResult.ai_narrative_provider === 'bedrock' ? (
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-[rgba(255,153,0,0.15)] text-[#FF9900] border border-[rgba(255,153,0,0.35)]">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#FF9900] animate-pulse" />
+                      Amazon Bedrock · {narrativeResult.model_id || 'amazon.nova-lite-v1:0'}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-[rgba(161,161,170,0.15)] text-[#A1A1AA] border border-[rgba(161,161,170,0.3)]">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#A1A1AA]" />
+                      Deterministic Fallback Provider
+                    </span>
+                  )}
+                  {narrativeResult.latency_ms !== undefined && narrativeResult.latency_ms > 0 && (
+                    <span className="text-[11px] font-mono text-[#71717A]">
+                      ({narrativeResult.latency_ms.toFixed(0)}ms)
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-[#A1A1AA]">
+                  Evidence-grounded operational synthesis derived from verified CloudTrail and CloudWatch events
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-mono px-2.5 py-1 rounded bg-[#232327] text-[#D4D4D8] border border-[#2A2A2F]">
+                Evidence Cited: <strong className="text-[#3FB950]">{narrativeResult.narrative.evidence_count}</strong>
+              </span>
+            </div>
+          </div>
+
+          {/* Narrative Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 text-[13px]">
+            <div className="lg:col-span-2 space-y-3">
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#58A6FF] block">
+                  Executive Summary
+                </span>
+                <p className="text-[#ECECEC] leading-relaxed text-[13px]">
+                  {narrativeResult.narrative.summary}
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#A1A1AA] block">
+                  Observed Infrastructure Change
+                </span>
+                <p className="text-[#D4D4D8] font-mono text-[12px] bg-[#121214] p-2.5 rounded-[6px] border border-[#232327] leading-relaxed">
+                  {narrativeResult.narrative.observed_change}
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#3FB950] block">
+                  Evidence-Backed Causal Assessment
+                </span>
+                <p className="text-[#D4D4D8] leading-relaxed text-[12px]">
+                  {narrativeResult.narrative.causal_assessment}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3 bg-[#121214] p-3.5 rounded-[8px] border border-[#232327]">
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#F85149] block">
+                  Observed Telemetry Evidence
+                </span>
+                <div className="space-y-1.5">
+                  {narrativeResult.narrative.telemetry_evidence.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="text-[11px] font-mono px-2 py-1 rounded bg-[#1A1A1E] text-[#ECECEC] border border-[#2A2A2F] leading-tight"
+                    >
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {narrativeResult.narrative.uncertainties && narrativeResult.narrative.uncertainties.length > 0 && (
+                <div className="space-y-1">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#D29922] block">
+                    Operational Caveats &amp; Bounds
+                  </span>
+                  <ul className="list-disc list-inside text-[11px] text-[#A1A1AA] space-y-0.5">
+                    {narrativeResult.narrative.uncertainties.map((u, i) => (
+                      <li key={i}>{u}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="space-y-1 pt-1 border-t border-[#232327]">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#58A6FF] block">
+                  Recommended Action
+                </span>
+                <p className="text-[11px] text-[#ECECEC] leading-snug">
+                  {narrativeResult.narrative.recommended_action}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Distinction Bar: Current Telemetry vs Verified Evidence vs Memory vs Inference */}
       {isLive && (

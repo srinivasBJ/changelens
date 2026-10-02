@@ -49,3 +49,5 @@ docker-compose.override.yml
 # Artifacts
 *.log
 *.zip
+logs/
+backend/app/data/

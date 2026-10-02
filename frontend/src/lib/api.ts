@@ -5,6 +5,7 @@ import {
   EvidenceArtifact,
   EvidencePack,
   InvestigationCase,
+  NarrativeResult,
   OperationalMemory,
   TimelineEvent,
 } from './types';
@@ -72,10 +73,20 @@ export async function getMemory(id: string): Promise<OperationalMemory[]> {
   return fetchJson<OperationalMemory[]>(`/api/investigations/${id}/memory`);
 }
 
+export async function getNarrative(id: string, refresh = false): Promise<NarrativeResult> {
+  const query = refresh ? '?refresh=true' : '';
+  return fetchJson<NarrativeResult>(`/api/investigations/${id}/narrative${query}`);
+}
+
 export async function createEvidencePack(id: string): Promise<EvidencePack> {
-  return fetchJson<EvidencePack>(`/api/investigations/${id}/evidence-pack`, {
-    method: 'POST',
-  });
+  try {
+    return await fetchJson<EvidencePack>(`/api/investigations/${id}/evidence-pack`, {
+      method: 'POST',
+    });
+  } catch {
+    // Read-only public fallback
+    return fetchJson<EvidencePack>(`/api/investigations/${id}/evidence-pack`);
+  }
 }
 
 export async function injectDemoChange(): Promise<InvestigationCase> {

@@ -40,9 +40,11 @@ from app.models.core import (
     GraphNode,
     ImpactEdge,
     InvestigationCase,
+    NarrativeResult,
     OperationalMemory,
     TimelineEvent,
 )
+from app.services.bedrock import BedrockService
 from app.services.correlation import CorrelationEngine
 
 logger = logging.getLogger(__name__)
@@ -56,6 +58,7 @@ class InvestigationService:
         memory_provider: Optional[MemoryProvider] = None,
         aws_adapter: Optional[AWSAdapter] = None,
         correlation_engine: Optional[CorrelationEngine] = None,
+        bedrock_service: Optional[BedrockService] = None,
     ):
         self.memory_provider = memory_provider or create_memory_provider(
             api_url=settings.hindsight_api_url if not settings.is_demo else None,
@@ -64,6 +67,7 @@ class InvestigationService:
         )
         self.aws_adapter = aws_adapter or AWSAdapter(region=settings.aws_region, profile=settings.aws_profile)
         self.correlation_engine = correlation_engine or CorrelationEngine()
+        self.bedrock_service = bedrock_service or BedrockService()
 
         # In-memory storage for investigations, changes, approvals, agent actions
         self._investigations: Dict[str, InvestigationCase] = {}
@@ -282,6 +286,8 @@ class InvestigationService:
                 operational_state=op_state,
                 latest_telemetry_timestamp=now,
                 current_window_anomalies_count=len(current_window_anomalies),
+                ai_narrative=base_inv.ai_narrative,
+                ai_narrative_provider=base_inv.ai_narrative_provider,
             )
 
             self._investigations["inv_live_001"] = updated_live_inv
@@ -301,7 +307,31 @@ class InvestigationService:
     async def get_investigation(self, investigation_id: str) -> Optional[InvestigationCase]:
         """Retrieve full details of an investigation."""
         await self._sync_live_aws_data()
-        return self._investigations.get(investigation_id)
+        inv = self._investigations.get(investigation_id)
+        if inv and inv.ai_narrative is None:
+            await self.get_investigation_narrative(investigation_id)
+        return inv
+
+    async def get_investigation_narrative(
+        self, investigation_id: str, force_refresh: bool = False
+    ) -> Optional[NarrativeResult]:
+        """Retrieve or generate Bedrock operational narrative with fallback."""
+        inv = self._investigations.get(investigation_id)
+        if not inv:
+            return None
+
+        # Return cached narrative if already generated and no force refresh requested
+        if not force_refresh and inv.ai_narrative is not None:
+            # If cached is fallback and Bedrock is now enabled, attempt upgrade
+            if not (self.bedrock_service.enabled and inv.ai_narrative.ai_narrative_provider != "bedrock"):
+                return inv.ai_narrative
+
+        narrative_result = self.bedrock_service.generate_investigation_narrative(inv)
+        inv.ai_narrative = narrative_result
+        inv.ai_narrative_provider = narrative_result.ai_narrative_provider
+        if inv.id == "inv_live_001":
+            self._save_live_investigation(inv)
+        return narrative_result
 
     async def get_timeline(self, investigation_id: str) -> List[TimelineEvent]:
         """Retrieve timeline events for an investigation."""

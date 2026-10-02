@@ -83,15 +83,31 @@ def test_investigations_endpoints():
     mems = res_memory.json()
     assert len(mems) > 0
 
-    # Evidence pack POST
+    # Narrative endpoint (public GET)
+    res_narrative = client.get(f"/api/investigations/{inv_id}/narrative")
+    assert res_narrative.status_code == 200
+    narrative_data = res_narrative.json()
+    assert "narrative" in narrative_data
+    assert narrative_data["ai_narrative_provider"] in ("bedrock", "local_fallback")
+    assert narrative_data["narrative"]["evidence_count"] >= 1
+
+    # Evidence pack GET (public read-only)
+    res_pack_get = client.get(f"/api/investigations/{inv_id}/evidence-pack")
+    assert res_pack_get.status_code == 200
+    pack_get = res_pack_get.json()
+    assert pack_get["content_hash"].startswith("sha256:")
+
+    # Evidence pack POST (export)
     res_pack = client.post(f"/api/investigations/{inv_id}/evidence-pack")
     assert res_pack.status_code == 200
     pack = res_pack.json()
     assert pack["content_hash"].startswith("sha256:")
 
 
-def test_events_and_demo_endpoints():
-    # Agent action POST
+def test_protected_mutating_endpoints_auth():
+    """Verify protected mutating POST routes: no key, invalid key, valid key."""
+    from app.config import settings
+
     action_payload = {
         "agent_id": "test-agent",
         "session_id": "sess-test",
@@ -102,22 +118,76 @@ def test_events_and_demo_endpoints():
         "approval_status": "missing",
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
-    res_act = client.post("/api/events/agent-action", json=action_payload)
-    assert res_act.status_code == 200
-    assert res_act.json()["agent_id"] == "test-agent"
-
-    # Approval POST
     approval_payload = {
         "status": "approved",
         "approver": "ops-manager@example.com",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "reason": "Emergency capacity restoration",
     }
-    res_apr = client.post("/api/events/approval", json=approval_payload)
-    assert res_apr.status_code == 200
-    assert res_apr.json()["status"] == "approved"
 
-    # Demo inject POST
-    res_demo = client.post("/api/demo/inject-change")
-    assert res_demo.status_code == 200
-    assert res_demo.json()["id"] == "inv_demo_001"
+    # 1. Fail closed when CHANGELENS_API_KEY is not configured
+    original_key = settings.changelens_api_key
+    try:
+        settings.changelens_api_key = None
+        # Should return 403 (fail closed)
+        res = client.post("/api/events/agent-action", json=action_payload)
+        assert res.status_code == 403
+        assert "disabled" in res.json()["detail"].lower()
+
+        res_demo = client.post("/api/demo/inject-change")
+        assert res_demo.status_code == 403
+
+        # 2. Configure a test API key
+        settings.changelens_api_key = "test-auth-key-supersecret"
+
+        # Case A: Protected POST with no key header -> denied (401 Unauthorized)
+        res_no_header = client.post("/api/events/agent-action", json=action_payload)
+        assert res_no_header.status_code == 401
+        assert "missing" in res_no_header.json()["detail"].lower()
+
+        res_demo_no_hdr = client.post("/api/demo/inject-change")
+        assert res_demo_no_hdr.status_code == 401
+
+        # Case B: Protected POST with incorrect key -> denied (403 Forbidden)
+        res_bad_key = client.post(
+            "/api/events/agent-action",
+            json=action_payload,
+            headers={"X-ChangeLens-Key": "wrong-key-value"},
+        )
+        assert res_bad_key.status_code == 403
+        assert "invalid" in res_bad_key.json()["detail"].lower()
+
+        res_bad_demo = client.post(
+            "/api/demo/inject-change",
+            headers={"X-ChangeLens-Key": "wrong-key-value"},
+        )
+        assert res_bad_demo.status_code == 403
+
+        # Case C: Protected POST with correct key -> allowed (200 OK)
+        valid_headers = {"X-ChangeLens-Key": "test-auth-key-supersecret"}
+
+        res_ok_act = client.post(
+            "/api/events/agent-action",
+            json=action_payload,
+            headers=valid_headers,
+        )
+        assert res_ok_act.status_code == 200
+        assert res_ok_act.json()["agent_id"] == "test-agent"
+
+        res_ok_apr = client.post(
+            "/api/events/approval",
+            json=approval_payload,
+            headers=valid_headers,
+        )
+        assert res_ok_apr.status_code == 200
+        assert res_ok_apr.json()["status"] == "approved"
+
+        res_ok_demo = client.post(
+            "/api/demo/inject-change",
+            headers=valid_headers,
+        )
+        assert res_ok_demo.status_code == 200
+        assert res_ok_demo.json()["id"] == "inv_demo_001"
+
+    finally:
+        settings.changelens_api_key = original_key

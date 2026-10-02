@@ -7,7 +7,7 @@ timelines, blast-radius dependency graphs, evidence artifacts, and operational m
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.api.dependencies import get_investigation_service
+from app.api.dependencies import get_investigation_service, verify_api_key
 from app.config import settings
 from app.models.core import (
     AgentAction,
@@ -18,6 +18,7 @@ from app.models.core import (
     EvidenceArtifact,
     EvidencePack,
     InvestigationCase,
+    NarrativeResult,
     OperationalMemory,
     TimelineEvent,
 )
@@ -168,6 +169,45 @@ async def get_investigation_memory(
     return await service.get_memories(investigation_id)
 
 
+@router.get(
+    "/api/investigations/{investigation_id}/narrative",
+    response_model=NarrativeResult,
+    tags=["Investigations"],
+)
+async def get_investigation_narrative(
+    investigation_id: str,
+    refresh: bool = False,
+    service: InvestigationService = Depends(get_investigation_service),
+):
+    """Retrieve or generate Bedrock operational narrative with transparent fallback status."""
+    narrative = await service.get_investigation_narrative(investigation_id, force_refresh=refresh)
+    if not narrative:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Investigation '{investigation_id}' not found",
+        )
+    return narrative
+
+
+@router.get(
+    "/api/investigations/{investigation_id}/evidence-pack",
+    response_model=EvidencePack,
+    tags=["Investigations"],
+)
+async def get_evidence_pack(
+    investigation_id: str,
+    service: InvestigationService = Depends(get_investigation_service),
+):
+    """Retrieve generated Evidence Pack with SHA-256 verification hash (read-only)."""
+    pack = await service.generate_evidence_pack(investigation_id)
+    if not pack:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Investigation '{investigation_id}' not found",
+        )
+    return pack
+
+
 @router.post(
     "/api/investigations/{investigation_id}/evidence-pack",
     response_model=EvidencePack,
@@ -191,8 +231,9 @@ async def create_evidence_pack(
 async def record_agent_action(
     action: AgentAction,
     service: InvestigationService = Depends(get_investigation_service),
+    _auth: str = Depends(verify_api_key),
 ):
-    """Record an AI agent action event to establish operational accountability."""
+    """Record an AI agent action event (Protected: requires X-ChangeLens-Key header)."""
     return await service.record_agent_action(action)
 
 
@@ -200,14 +241,16 @@ async def record_agent_action(
 async def record_approval(
     approval: Approval,
     service: InvestigationService = Depends(get_investigation_service),
+    _auth: str = Depends(verify_api_key),
 ):
-    """Record an infrastructure change approval state (approved, rejected, missing, not_required)."""
+    """Record an infrastructure change approval state (Protected: requires X-ChangeLens-Key header)."""
     return await service.record_approval(approval)
 
 
 @router.post("/api/demo/inject-change", response_model=InvestigationCase, tags=["Demo"])
 async def inject_demo_change(
     service: InvestigationService = Depends(get_investigation_service),
+    _auth: str = Depends(verify_api_key),
 ):
-    """Trigger the deterministic demo scenario: Lambda concurrency reduction causing throttling."""
+    """Trigger the deterministic demo scenario (Protected: requires X-ChangeLens-Key header)."""
     return await service.inject_demo_change()

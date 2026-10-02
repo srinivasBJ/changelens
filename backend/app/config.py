@@ -19,9 +19,13 @@ class Settings(BaseSettings):
     hindsight_api_key: Optional[str] = None
     hindsight_bank_id: str = "changelens-operational-memory"
 
-    # Optional LLM
-    bedrock_model_id: Optional[str] = None
-    bedrock_region: Optional[str] = None
+    # Bedrock LLM Integration
+    bedrock_enabled: bool = True
+    bedrock_model_id: str = "amazon.nova-lite-v1:0"
+    bedrock_region: str = "us-east-2"
+
+    # API Security / Mutating routes auth
+    changelens_api_key: Optional[str] = None
 
     # Backend
     backend_port: int = 8000
