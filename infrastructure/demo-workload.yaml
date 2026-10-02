@@ -1,0 +1,213 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ChangeLens Demo Workload - API Gateway + Lambda + DynamoDB
+
+Parameters:
+  Stage:
+    Type: String
+    Default: demo
+    Description: Deployment stage
+
+Resources:
+  # DynamoDB Table for demo orders
+  OrdersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: changelens-orders
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: orderId
+          AttributeType: S
+        - AttributeName: createdAt
+          AttributeType: S
+      KeySchema:
+        - AttributeName: orderId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: createdAt-index
+          KeySchema:
+            - AttributeName: createdAt
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      Tags:
+        - Key: Project
+          Value: ChangeLens
+        - Key: Environment
+          Value: demo
+
+  # Lambda execution role
+  CheckoutFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: changelens-checkout-function-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                  - dynamodb:Query
+                Resource: !GetAtt OrdersTable.Arn
+      Tags:
+        - Key: Project
+          Value: ChangeLens
+
+  # Lambda checkout function
+  CheckoutFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: changelens-checkout-function
+      Runtime: python3.12
+      Handler: index.handler
+      Role: !GetAtt CheckoutFunctionRole.Arn
+      Timeout: 10
+      MemorySize: 128
+      ReservedConcurrentExecutions: 10
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref OrdersTable
+          STAGE: !Ref Stage
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import uuid
+          import os
+          from datetime import datetime
+
+          dynamodb = boto3.resource('dynamodb')
+          table = dynamodb.Table(os.environ['TABLE_NAME'])
+
+          def handler(event, context):
+              try:
+                  body = json.loads(event.get('body', '{}')) if isinstance(event.get('body'), str) else event.get('body', {})
+                  order_id = str(uuid.uuid4())
+                  item = {
+                      'orderId': order_id,
+                      'createdAt': datetime.utcnow().isoformat(),
+                      'customer': body.get('customer', 'demo-customer'),
+                      'amount': body.get('amount', 29.99),
+                      'status': 'created',
+                      'stage': os.environ.get('STAGE', 'demo')
+                  }
+                  table.put_item(Item=item)
+                  return {
+                      'statusCode': 200,
+                      'headers': {
+                          'Content-Type': 'application/json',
+                          'Access-Control-Allow-Origin': '*'
+                      },
+                      'body': json.dumps({
+                          'orderId': order_id,
+                          'status': 'created',
+                          'message': 'Order created successfully'
+                      })
+                  }
+              except Exception as e:
+                  return {
+                      'statusCode': 500,
+                      'headers': {
+                          'Content-Type': 'application/json',
+                          'Access-Control-Allow-Origin': '*'
+                      },
+                      'body': json.dumps({
+                          'error': str(e),
+                          'message': 'Failed to create order'
+                      })
+                  }
+      Tags:
+        - Key: Project
+          Value: ChangeLens
+
+  # API Gateway REST API
+  CheckoutApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: changelens-checkout-api
+      Description: ChangeLens Demo Checkout API
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  # /checkout resource
+  CheckoutResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref CheckoutApi
+      ParentId: !GetAtt CheckoutApi.RootResourceId
+      PathPart: checkout
+
+  # POST /checkout method
+  CheckoutMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref CheckoutApi
+      ResourceId: !Ref CheckoutResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CheckoutFunction.Arn}/invocations
+
+  # Lambda permission for API Gateway
+  CheckoutFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref CheckoutFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${CheckoutApi}/*
+
+  # API deployment
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: CheckoutMethod
+    Properties:
+      RestApiId: !Ref CheckoutApi
+
+  # API stage
+  ApiStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId: !Ref CheckoutApi
+      DeploymentId: !Ref ApiDeployment
+      StageName: !Ref Stage
+      MethodSettings:
+        - HttpMethod: '*'
+          ResourcePath: '/*'
+          MetricsEnabled: true
+          DataTraceEnabled: false
+
+Outputs:
+  ApiUrl:
+    Description: Checkout API URL
+    Value: !Sub https://${CheckoutApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/checkout
+
+  FunctionName:
+    Description: Lambda function name
+    Value: !Ref CheckoutFunction
+
+  FunctionArn:
+    Description: Lambda function ARN
+    Value: !GetAtt CheckoutFunction.Arn
+
+  TableName:
+    Description: DynamoDB table name
+    Value: !Ref OrdersTable
+
+  TableArn:
+    Description: DynamoDB table ARN
+    Value: !GetAtt OrdersTable.Arn
