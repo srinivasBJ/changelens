@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Clock, Filter, RotateCw, Search, Shield, Zap, CheckCircle2, ChevronRight, Terminal } from 'lucide-react';
+import { ArrowLeft, Clock, Filter, RotateCw, Search, Shield, Zap } from 'lucide-react';
 import { getChanges } from '@/lib/api';
 import { Change } from '@/lib/types';
 import { SourceBadge } from '@/components/SourceBadge';
@@ -52,26 +52,39 @@ export default function ChangesPage() {
   const selectedChange =
     changes.find((c) => c.id === selectedEventId) || (filteredChanges.length > 0 ? filteredChanges[0] : null);
 
+  const getActorBadge = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'human':
+        return 'bg-[#0066FF] text-[#FFFFFF] font-bold';
+      case 'automation':
+        return 'bg-[#333333] text-[#A0A0A0] font-semibold';
+      case 'ai_agent':
+        return 'bg-[#0066FF]/20 text-[#0066FF] border border-[#0066FF]/40 font-bold';
+      default:
+        return 'bg-[#2a2a2a] text-[#A0A0A0]';
+    }
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-[32px]">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-[#222733]">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-[#2a2a2a]">
         <div>
           <div className="flex items-center gap-2">
             <Link
               href="/"
-              className="inline-flex items-center gap-1 text-[11px] font-mono text-slate-400 hover:text-blue-400 transition-colors mr-1"
+              className="inline-flex items-center gap-1.5 text-xs font-mono text-[#A0A0A0] hover:text-[#FFFFFF] transition-colors mr-1"
             >
-              <ArrowLeft className="w-3 h-3" />
+              <ArrowLeft className="w-3.5 h-3.5" />
               <span>Console</span>
             </Link>
-            <span>/</span>
-            <h1 className="text-base font-bold font-mono text-slate-100 uppercase tracking-wide flex items-center gap-1.5">
-              <Zap className="w-4 h-4 text-blue-400" />
+            <span className="text-[#333333]">/</span>
+            <h1 className="text-base font-bold font-mono text-[#FFFFFF] uppercase tracking-wide flex items-center gap-2">
+              <Zap className="w-4 h-4 text-[#0066FF]" />
               <span>CloudTrail Infrastructure Changes</span>
             </h1>
           </div>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-[#A0A0A0] mt-1">
             Normalized configuration modification events across monitored AWS services in us-east-2.
           </p>
         </div>
@@ -79,34 +92,34 @@ export default function ChangesPage() {
         <button
           onClick={loadData}
           disabled={loading}
-          className="px-2.5 py-1.5 rounded border border-[#222733] bg-[#13161c] hover:bg-[#1a1e27] text-slate-300 font-mono text-xs flex items-center gap-1.5 transition-colors disabled:opacity-50"
+          className="h-[44px] min-h-[44px] px-4 rounded-[8px] border border-[#2a2a2a] bg-transparent hover:bg-[#1a1a1a] text-[#A0A0A0] hover:text-[#FFFFFF] font-mono text-xs flex items-center gap-2 transition-colors disabled:opacity-50"
           title="Refresh"
         >
-          <RotateCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+          <RotateCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           <span>Sync Events</span>
         </button>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row gap-2.5 p-2.5 rounded border border-[#222733] bg-[#13161c]">
+      <div className="flex flex-col sm:flex-row gap-3 p-[20px] rounded-[10px] border border-[#2a2a2a] bg-[#0a0a0a]">
         <div className="relative flex-1">
-          <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5" />
+          <Search className="w-4 h-4 text-[#666666] absolute left-3.5 top-3.5" />
           <input
             type="text"
             placeholder="Filter by action, resource, or actor ARN..."
             value={filterQuery}
             onChange={(e) => setFilterQuery(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 bg-[#0a0c0f] border border-[#222733] rounded text-xs font-mono text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500"
+            className="w-full h-[44px] min-h-[44px] pl-10 pr-4 bg-[#111111] border border-[#2a2a2a] rounded-[8px] text-xs font-mono text-[#FFFFFF] placeholder-[#666666] focus:outline-none focus:border-[#0066FF]"
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] font-mono uppercase text-slate-400">SERVICE:</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-mono uppercase tracking-[1px] text-[#666666]">SERVICE:</span>
             <select
               value={selectedService}
               onChange={(e) => setSelectedService(e.target.value)}
-              className="bg-[#0a0c0f] border border-[#222733] rounded text-xs font-mono text-slate-300 px-2.5 py-1.5 focus:outline-none focus:border-blue-500 uppercase"
+              className="h-[44px] min-h-[44px] bg-[#111111] border border-[#2a2a2a] rounded-[8px] text-xs font-mono text-[#FFFFFF] px-3 focus:outline-none focus:border-[#0066FF] uppercase"
             >
               {services.map((s) => (
                 <option key={s} value={s}>
@@ -116,12 +129,12 @@ export default function ChangesPage() {
             </select>
           </div>
 
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] font-mono uppercase text-slate-400">ACTOR:</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-mono uppercase tracking-[1px] text-[#666666]">ACTOR:</span>
             <select
               value={selectedActorType}
               onChange={(e) => setSelectedActorType(e.target.value)}
-              className="bg-[#0a0c0f] border border-[#222733] rounded text-xs font-mono text-slate-300 px-2.5 py-1.5 focus:outline-none focus:border-blue-500 uppercase"
+              className="h-[44px] min-h-[44px] bg-[#111111] border border-[#2a2a2a] rounded-[8px] text-xs font-mono text-[#FFFFFF] px-3 focus:outline-none focus:border-[#0066FF] uppercase"
             >
               {actorTypes.map((a) => (
                 <option key={a} value={a}>
@@ -134,31 +147,31 @@ export default function ChangesPage() {
       </div>
 
       {/* Main Split: Dense Event Table + Selected Event Inspector */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-[20px]">
         {/* Left/Center Event Table (8 Cols) */}
-        <div className="lg:col-span-8 border border-[#222733] rounded bg-[#13161c] overflow-hidden">
-          <div className="px-3 py-2 border-b border-[#222733] bg-[#0e1116] flex items-center justify-between text-xs font-mono">
-            <span className="font-bold text-slate-200 uppercase">
+        <div className="lg:col-span-8 border border-[#2a2a2a] rounded-[10px] bg-[#0a0a0a] overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-[#2a2a2a] bg-[#111111] flex items-center justify-between text-xs font-mono">
+            <span className="font-bold text-[#666666] uppercase tracking-[1px]">
               Events Stream ({filteredChanges.length})
             </span>
-            <span className="text-slate-400 text-[10px]">
+            <span className="text-[#666666] text-[11px]">
               Click row to inspect event details
             </span>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs font-mono">
-              <thead className="bg-[#0a0c0f] text-slate-400 uppercase text-[10px] tracking-wider border-b border-[#222733]">
-                <tr>
-                  <th className="py-2 px-3">Action</th>
-                  <th className="py-2 px-3">Service</th>
-                  <th className="py-2 px-3">Resource</th>
-                  <th className="py-2 px-3">Actor</th>
-                  <th className="py-2 px-3">Type</th>
-                  <th className="py-2 px-3">Time</th>
+              <thead className="bg-[#111111] text-[#666666] uppercase text-[11px] tracking-[1px] border-b border-[#2a2a2a]">
+                <tr className="h-[44px]">
+                  <th className="py-2.5 px-4 font-semibold">Action</th>
+                  <th className="py-2.5 px-4 font-semibold">Service</th>
+                  <th className="py-2.5 px-4 font-semibold">Resource</th>
+                  <th className="py-2.5 px-4 font-semibold">Actor</th>
+                  <th className="py-2.5 px-4 font-semibold">Type</th>
+                  <th className="py-2.5 px-4 font-semibold">Time</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#1e232d]">
+              <tbody className="divide-y divide-[#1a1a1a]">
                 {filteredChanges.map((chg) => {
                   const isSelected = selectedChange?.id === chg.id;
 
@@ -166,38 +179,30 @@ export default function ChangesPage() {
                     <tr
                       key={chg.id}
                       onClick={() => setSelectedEventId(chg.id)}
-                      className={`cursor-pointer transition-colors ${
+                      className={`cursor-pointer transition-colors h-[52px] min-h-[52px] ${
                         isSelected
-                          ? 'bg-[#1a2b4c] text-white font-semibold'
-                          : 'hover:bg-[#181c24] text-slate-300'
+                          ? 'bg-[#0d1117] border-l-[3px] border-[#0066FF] text-[#FFFFFF]'
+                          : 'bg-transparent hover:bg-[#0d1117] text-[#A0A0A0]'
                       }`}
                     >
-                      <td className="py-2 px-3 font-bold text-slate-100 font-sans">
+                      <td className="py-3 px-4 font-bold text-[#FFFFFF] font-sans">
                         {chg.action}
                       </td>
-                      <td className="py-2 px-3">
+                      <td className="py-3 px-4">
                         <SourceBadge source={chg.service} />
                       </td>
-                      <td className="py-2 px-3 text-slate-300 text-[11px] truncate max-w-[160px]" title={chg.resource_name}>
+                      <td className="py-3 px-4 text-[#A0A0A0] text-xs truncate max-w-[170px]" title={chg.resource_name}>
                         {chg.resource_name}
                       </td>
-                      <td className="py-2 px-3 text-slate-400 text-[11px] truncate max-w-[140px]" title={chg.actor_id}>
+                      <td className="py-3 px-4 text-[#666666] text-xs truncate max-w-[140px]" title={chg.actor_id}>
                         {chg.actor_id}
                       </td>
-                      <td className="py-2 px-3 uppercase text-[10px]">
-                        <span
-                          className={`px-1.5 py-0.2 rounded font-bold ${
-                            chg.actor_type === 'ai_agent'
-                              ? 'bg-cyan-950 text-cyan-300 border border-cyan-800'
-                              : chg.actor_type === 'human'
-                              ? 'bg-blue-950 text-blue-300 border border-blue-800'
-                              : 'bg-slate-800 text-slate-400 border border-slate-700'
-                          }`}
-                        >
+                      <td className="py-3 px-4 uppercase text-[10px]">
+                        <span className={`px-2 py-0.5 rounded-full ${getActorBadge(chg.actor_type)}`}>
                           {chg.actor_type}
                         </span>
                       </td>
-                      <td className="py-2 px-3 text-slate-400 text-[10px] whitespace-nowrap">
+                      <td className="py-3 px-4 text-[#666666] text-[11px] whitespace-nowrap">
                         {new Date(chg.timestamp).toLocaleTimeString()}
                       </td>
                     </tr>
@@ -209,74 +214,76 @@ export default function ChangesPage() {
         </div>
 
         {/* Right Event Inspector Panel (4 Cols) */}
-        <div className="lg:col-span-4 space-y-3">
-          <div className="border border-[#222733] rounded bg-[#13161c] p-3.5 space-y-3 font-mono text-xs sticky top-4">
-            <div className="flex items-center justify-between border-b border-[#222733] pb-2">
-              <span className="font-bold uppercase tracking-wider text-slate-200">
+        <div className="lg:col-span-4 space-y-[20px]">
+          <div className="border border-[#2a2a2a] rounded-[10px] bg-[#0a0a0a] p-[20px] space-y-4 font-mono text-xs sticky top-6">
+            <div className="flex items-center justify-between border-b border-[#2a2a2a] pb-3">
+              <span className="font-bold uppercase tracking-[1px] text-[#666666] text-[11px]">
                 CloudTrail Inspector
               </span>
               {selectedChange && (
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#1e232d] text-blue-300 uppercase">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#111111] text-[#0066FF] border border-[#2a2a2a] uppercase font-bold">
                   {selectedChange.service}
                 </span>
               )}
             </div>
 
             {selectedChange ? (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div>
-                  <span className="text-[10px] uppercase text-slate-400 block">Action</span>
-                  <span className="font-bold text-slate-100 text-sm break-all font-sans">
+                  <span className="text-[11px] uppercase tracking-[1px] text-[#666666] block mb-1">
+                    Action
+                  </span>
+                  <span className="font-bold text-[#FFFFFF] text-sm break-all font-sans">
                     {selectedChange.action}
                   </span>
                 </div>
 
-                <div className="p-2.5 rounded bg-[#0d0f12] border border-[#1f242e] text-[11px] space-y-1.5">
-                  <div className="flex justify-between gap-2 border-b border-[#1a1f28] pb-1">
-                    <span className="text-slate-400">Resource:</span>
-                    <span className="text-slate-200 truncate font-bold" title={selectedChange.resource_name}>
+                <div className="p-3.5 rounded-[8px] bg-[#111111] border border-[#2a2a2a] text-xs space-y-2">
+                  <div className="flex justify-between gap-2 border-b border-[#1a1a1a] pb-1.5">
+                    <span className="text-[#666666]">Resource:</span>
+                    <span className="text-[#FFFFFF] truncate font-bold" title={selectedChange.resource_name}>
                       {selectedChange.resource_name}
                     </span>
                   </div>
-                  <div className="flex justify-between gap-2 border-b border-[#1a1f28] pb-1">
-                    <span className="text-slate-400">Actor Type:</span>
-                    <span className="text-blue-300 font-semibold uppercase">
+                  <div className="flex justify-between gap-2 border-b border-[#1a1a1a] pb-1.5">
+                    <span className="text-[#666666]">Actor Type:</span>
+                    <span className="text-[#0066FF] font-semibold uppercase">
                       {selectedChange.actor_type}
                     </span>
                   </div>
-                  <div className="flex justify-between gap-2 border-b border-[#1a1f28] pb-1">
-                    <span className="text-slate-400">Actor ID:</span>
-                    <span className="text-slate-200 truncate" title={selectedChange.actor_id}>
+                  <div className="flex justify-between gap-2 border-b border-[#1a1a1a] pb-1.5">
+                    <span className="text-[#666666]">Actor ID:</span>
+                    <span className="text-[#FFFFFF] truncate" title={selectedChange.actor_id}>
                       {selectedChange.actor_id}
                     </span>
                   </div>
-                  <div className="flex justify-between gap-2 border-b border-[#1a1f28] pb-1">
-                    <span className="text-slate-400">Region:</span>
-                    <span className="text-slate-200">{selectedChange.region}</span>
+                  <div className="flex justify-between gap-2 border-b border-[#1a1a1a] pb-1.5">
+                    <span className="text-[#666666]">Region:</span>
+                    <span className="text-[#FFFFFF]">{selectedChange.region}</span>
                   </div>
-                  <div className="flex justify-between gap-2 border-b border-[#1a1f28] pb-1">
-                    <span className="text-slate-400">Timestamp:</span>
-                    <span className="text-slate-200">{new Date(selectedChange.timestamp).toLocaleString()}</span>
+                  <div className="flex justify-between gap-2 border-b border-[#1a1a1a] pb-1.5">
+                    <span className="text-[#666666]">Timestamp:</span>
+                    <span className="text-[#FFFFFF]">{new Date(selectedChange.timestamp).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between gap-2">
-                    <span className="text-slate-400">Event ID:</span>
-                    <span className="text-slate-400 truncate max-w-[180px]" title={selectedChange.raw_event_ref}>
+                    <span className="text-[#666666]">Event ID:</span>
+                    <span className="text-[#A0A0A0] truncate max-w-[190px]" title={selectedChange.raw_event_ref}>
                       {selectedChange.raw_event_ref || selectedChange.id}
                     </span>
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <span className="text-[10px] uppercase text-slate-400 block font-semibold">
+                <div className="space-y-1.5">
+                  <span className="text-[11px] uppercase tracking-[1px] text-[#666666] block font-semibold">
                     Raw Evidence Reference
                   </span>
-                  <div className="p-2 rounded bg-[#0a0c0f] border border-[#1f242e] text-[10px] text-slate-400 break-all">
+                  <div className="p-3 rounded-[8px] bg-[#111111] border border-[#2a2a2a] text-[11px] text-[#A0A0A0] break-all">
                     aws:cloudtrail:{selectedChange.region}:event:{selectedChange.raw_event_ref || selectedChange.id}
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="py-8 text-center text-xs text-slate-500">
+              <div className="py-8 text-center text-xs text-[#666666]">
                 Select an event from the stream to view full details.
               </div>
             )}

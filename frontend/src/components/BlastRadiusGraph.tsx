@@ -12,24 +12,40 @@ export const BlastRadiusGraph: React.FC<Props> = ({ graph }) => {
   );
 
   const getNodeStyles = (type: string, isSelected: boolean) => {
-    if (isSelected) {
-      return 'border-blue-500 bg-[#16233b] ring-2 ring-blue-500 text-white';
-    }
+    let baseBorder = 'border-[#2a2a2a]';
+    let textColor = 'text-[#FFFFFF]';
 
     switch (type.toLowerCase()) {
       case 'change':
-        return 'border-blue-800 bg-[#111724] text-blue-300 hover:border-blue-600';
+        baseBorder = 'border-[#FF3366]';
+        textColor = 'text-[#FF3366]';
+        break;
       case 'resource':
-        return 'border-emerald-800 bg-[#0f1a16] text-emerald-300 hover:border-emerald-600';
-      case 'service':
-        return 'border-slate-700 bg-[#141720] text-slate-200 hover:border-slate-500';
+        baseBorder = 'border-[#0066FF]';
+        textColor = 'text-[#0066FF]';
+        break;
       case 'metric':
-        return 'border-rose-800 bg-[#1f1214] text-rose-300 hover:border-rose-600';
+        baseBorder = 'border-[#FFB800]';
+        textColor = 'text-[#FFB800]';
+        break;
+      case 'service':
+        baseBorder = 'border-[#0066FF]/60';
+        textColor = 'text-[#A0A0A0]';
+        break;
       case 'agent':
-        return 'border-cyan-800 bg-[#0f1b20] text-cyan-300 hover:border-cyan-600';
+        baseBorder = 'border-[#A0A0A0]';
+        textColor = 'text-[#A0A0A0]';
+        break;
       default:
-        return 'border-[#262c3a] bg-[#13161c] text-slate-300 hover:border-[#384154]';
+        baseBorder = 'border-[#2a2a2a]';
+        textColor = 'text-[#A0A0A0]';
     }
+
+    if (isSelected) {
+      return `${baseBorder} border-2 bg-[#0d1117] ring-1 ring-[#0066FF] shadow-[0_0_20px_rgba(0,102,255,0.3)] ${textColor}`;
+    }
+
+    return `${baseBorder} border bg-[#0a0a0a] hover:bg-[#111111] ${textColor}`;
   };
 
   const getNodeIcon = (type: string) => {
@@ -57,28 +73,28 @@ export const BlastRadiusGraph: React.FC<Props> = ({ graph }) => {
     : [];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-[20px]">
       {/* Topology Canvas & Edges (8 Cols) */}
-      <div className="lg:col-span-8 space-y-3">
-        <div className="border border-[#222733] rounded bg-[#13161c] p-4 space-y-4">
-          <div className="flex items-center justify-between border-b border-[#222733] pb-2.5">
+      <div className="lg:col-span-8 space-y-[20px]">
+        <div className="border border-[#2a2a2a] rounded-[10px] bg-[#0a0a0a] p-[20px] space-y-[20px]">
+          <div className="flex items-center justify-between border-b border-[#2a2a2a] pb-3">
             <div className="flex items-center gap-2">
-              <Network className="w-3.5 h-3.5 text-blue-400" />
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-200">
+              <Network className="w-4 h-4 text-[#0066FF]" />
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#FFFFFF]">
                 Topological Blast Radius Canvas
               </span>
             </div>
-            <span className="text-[11px] font-mono text-slate-400">
+            <span className="text-[11px] font-mono text-[#666666]">
               {graph.nodes.length} NODES · {graph.edges.length} EDGES
             </span>
           </div>
 
           {/* Node Grid Canvas */}
-          <div className="space-y-2">
-            <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">
+          <div className="space-y-3">
+            <div className="text-[11px] font-mono uppercase tracking-[1px] text-[#666666]">
               Topology Nodes (Click node to inspect metadata and impact paths)
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
               {graph.nodes.map((node) => {
                 const Icon = getNodeIcon(node.type);
                 const isSelected = selectedNode?.id === node.id;
@@ -88,28 +104,28 @@ export const BlastRadiusGraph: React.FC<Props> = ({ graph }) => {
                   <button
                     key={node.id}
                     onClick={() => setSelectedNode(node)}
-                    className={`text-left p-3 rounded border transition-colors relative font-mono text-xs ${getNodeStyles(
+                    className={`text-left p-3.5 rounded-[8px] transition-all relative font-mono text-xs ${getNodeStyles(
                       node.type,
                       isSelected
                     )}`}
                   >
                     {isCenter && (
-                      <span className="absolute top-1.5 right-1.5 px-1 py-0.2 rounded text-[8px] font-bold bg-blue-600 text-white uppercase">
+                      <span className="absolute top-2 right-2 px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#0066FF] text-[#FFFFFF] uppercase">
                         Center
                       </span>
                     )}
-                    <div className="flex items-center gap-1.5 mb-1 opacity-75">
+                    <div className="flex items-center gap-1.5 mb-1.5 opacity-80">
                       <Icon className="w-3.5 h-3.5" />
-                      <span className="text-[9px] uppercase tracking-wider font-semibold">
+                      <span className="text-[10px] uppercase tracking-wider font-semibold">
                         {node.type}
                       </span>
                     </div>
-                    <div className="font-bold text-slate-100 truncate text-[11px]" title={node.label}>
+                    <div className="font-bold text-[#FFFFFF] truncate text-xs" title={node.label}>
                       {node.label}
                     </div>
                     {node.severity && (
-                      <div className="mt-1 text-[9px] flex items-center gap-1 text-rose-400">
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                      <div className="mt-1.5 text-[10px] flex items-center gap-1 text-[#FF3366]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#FF3366]" />
                         <span>SEVERITY: {node.severity.toFixed(2)}</span>
                       </div>
                     )}
@@ -120,25 +136,25 @@ export const BlastRadiusGraph: React.FC<Props> = ({ graph }) => {
           </div>
 
           {/* Dependency Edges List */}
-          <div className="pt-3 border-t border-[#222733] space-y-2">
-            <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">
+          <div className="pt-4 border-t border-[#2a2a2a] space-y-2.5">
+            <div className="text-[11px] font-mono uppercase tracking-[1px] text-[#666666]">
               Dependency Edges & Corroborating Evidence
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               {graph.edges.map((edge, idx) => (
                 <div
                   key={idx}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between p-2 rounded bg-[#0d0f12] border border-[#1f242e] text-[11px] font-mono gap-1"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-2.5 rounded-[8px] bg-[#111111] border border-[#2a2a2a] text-xs font-mono gap-1.5"
                 >
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-blue-400 font-bold">{edge.source}</span>
-                    <ArrowRight className="w-3 h-3 text-slate-500" />
-                    <span className="text-slate-200">{edge.target}</span>
-                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#1e232d] text-slate-300 uppercase">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[#0066FF] font-bold">{edge.source}</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-[#666666]" />
+                    <span className="text-[#FFFFFF]">{edge.target}</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#1a1a1a] text-[#A0A0A0] uppercase border border-[#2a2a2a]">
                       {edge.label}
                     </span>
                   </div>
-                  <div className="text-[10px] text-slate-400 truncate max-w-[280px]">
+                  <div className="text-[11px] text-[#A0A0A0] truncate max-w-[300px]">
                     {edge.evidence.join(' · ')}
                   </div>
                 </div>
@@ -149,60 +165,64 @@ export const BlastRadiusGraph: React.FC<Props> = ({ graph }) => {
       </div>
 
       {/* Right Inspector Detail Panel (4 Cols) */}
-      <div className="lg:col-span-4 space-y-3">
-        <div className="border border-[#222733] rounded bg-[#13161c] p-4 space-y-4 sticky top-4">
-          <div className="flex items-center justify-between border-b border-[#222733] pb-2.5">
-            <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-200">
+      <div className="lg:col-span-4 space-y-[20px]">
+        <div className="border border-[#2a2a2a] rounded-[10px] bg-[#0a0a0a] p-[20px] space-y-[20px] sticky top-6">
+          <div className="flex items-center justify-between border-b border-[#2a2a2a] pb-3">
+            <span className="text-[11px] font-mono font-bold uppercase tracking-[1px] text-[#666666]">
               Node Inspector
             </span>
             {selectedNode && (
-              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#1e232d] text-blue-300 uppercase">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#111111] text-[#0066FF] border border-[#2a2a2a] uppercase font-bold">
                 {selectedNode.type}
               </span>
             )}
           </div>
 
           {selectedNode ? (
-            <div className="space-y-3 text-xs font-mono">
+            <div className="space-y-4 text-xs font-mono">
               <div>
-                <span className="text-[10px] uppercase text-slate-400 block">Identifier / Label</span>
-                <span className="font-bold text-slate-100 text-sm break-all">
+                <span className="text-[11px] uppercase tracking-[1px] text-[#666666] block mb-1">
+                  Identifier / Label
+                </span>
+                <span className="font-bold text-[#FFFFFF] text-sm break-all">
                   {selectedNode.label}
                 </span>
-                <span className="text-[10px] text-slate-400 block mt-0.5 truncate">
+                <span className="text-[11px] text-[#666666] block mt-1 truncate">
                   ID: {selectedNode.id}
                 </span>
               </div>
 
               {selectedNode.metadata && Object.keys(selectedNode.metadata).length > 0 && (
-                <div className="space-y-1.5">
-                  <span className="text-[10px] uppercase text-slate-400 block">Metadata</span>
-                  <div className="p-2.5 rounded bg-[#0d0f12] border border-[#1f242e] text-[11px] space-y-1">
+                <div className="space-y-2">
+                  <span className="text-[11px] uppercase tracking-[1px] text-[#666666] block">
+                    Metadata
+                  </span>
+                  <div className="p-3 rounded-[8px] bg-[#111111] border border-[#2a2a2a] text-xs space-y-1.5">
                     {Object.entries(selectedNode.metadata).map(([k, v]) => (
-                      <div key={k} className="flex justify-between gap-2">
-                        <span className="text-slate-400">{k}:</span>
-                        <span className="text-slate-200 text-right truncate max-w-[180px]">{String(v)}</span>
+                      <div key={k} className="flex justify-between gap-2 border-b border-[#1a1a1a] pb-1 last:border-0 last:pb-0">
+                        <span className="text-[#666666]">{k}:</span>
+                        <span className="text-[#FFFFFF] text-right truncate max-w-[180px] font-medium">{String(v)}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              <div className="space-y-1.5">
-                <span className="text-[10px] uppercase text-slate-400 block">
+              <div className="space-y-2">
+                <span className="text-[11px] uppercase tracking-[1px] text-[#666666] block">
                   Connected Relationships ({relevantEdges.length})
                 </span>
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   {relevantEdges.map((e, idx) => (
                     <div
                       key={idx}
-                      className="p-2 rounded bg-[#0d0f12] border border-[#1f242e] text-[11px] space-y-0.5"
+                      className="p-2.5 rounded-[8px] bg-[#111111] border border-[#2a2a2a] text-xs space-y-1"
                     >
-                      <div className="text-blue-300 font-semibold flex items-center gap-1.5">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                      <div className="text-[#0066FF] font-semibold flex items-center gap-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#00FF88]" />
                         <span>{e.source === selectedNode.id ? `➔ ${e.target}` : `⬅ ${e.source}`}</span>
                       </div>
-                      <div className="text-[10px] text-slate-400">
+                      <div className="text-[11px] text-[#A0A0A0]">
                         REL: {e.label} (weight: {e.weight})
                       </div>
                     </div>
@@ -211,7 +231,7 @@ export const BlastRadiusGraph: React.FC<Props> = ({ graph }) => {
               </div>
             </div>
           ) : (
-            <div className="py-8 text-center text-xs font-mono text-slate-500">
+            <div className="py-8 text-center text-xs font-mono text-[#666666]">
               Select a node in the graph to inspect metadata.
             </div>
           )}

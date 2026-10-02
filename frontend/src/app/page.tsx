@@ -15,8 +15,6 @@ import {
   RotateCw,
   ShieldAlert,
   Zap,
-  ChevronRight,
-  ExternalLink,
 } from 'lucide-react';
 import { getChanges, getInvestigations, getStats, injectDemoChange } from '@/lib/api';
 import { Change, DashboardStats, InvestigationCase } from '@/lib/types';
@@ -73,47 +71,47 @@ export default function Dashboard() {
     investigations.find((i) => i.id === selectedInvId) || investigations[0];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-[32px]">
       {/* Top Operational Status Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-[#222733]">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5 border-b border-[#2a2a2a]">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-base font-bold font-mono text-slate-100 uppercase tracking-wide">
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-lg font-bold font-mono text-[#FFFFFF] uppercase tracking-wide">
               Operational Work Queue
             </h1>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#161a24] text-blue-400 border border-blue-900/50">
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-[#0066FF]/15 text-[#0066FF] border border-[#0066FF]/30 font-bold">
               AWS us-east-2
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-[#A0A0A0] mt-1">
             Real-time change impact synthesis linking CloudTrail, CloudWatch telemetry anomalies, and Hindsight operational memories.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-stretch sm:self-auto">
+        <div className="flex items-center gap-3 self-stretch sm:self-auto">
           <button
             onClick={handleInjectDemo}
             disabled={injecting}
-            className="flex-1 sm:flex-none px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
+            className="h-[44px] min-h-[44px] px-4 rounded-[8px] bg-[#0066FF] hover:bg-[#0052CC] text-[#FFFFFF] font-mono text-xs font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
           >
-            <Play className="w-3 h-3 fill-current" />
-            {injecting ? 'Injecting...' : 'Inject Demo Scenario'}
+            <Play className="w-4 h-4 fill-current" />
+            <span>{injecting ? 'Injecting...' : 'Inject Demo Scenario'}</span>
           </button>
           <button
             onClick={loadData}
             disabled={loading}
-            className="px-2.5 py-1.5 rounded border border-[#222733] bg-[#13161c] hover:bg-[#1a1e27] text-slate-300 font-mono text-xs flex items-center gap-1.5 transition-colors disabled:opacity-50"
+            className="h-[44px] min-h-[44px] px-3.5 rounded-[8px] border border-[#2a2a2a] bg-transparent hover:bg-[#1a1a1a] text-[#A0A0A0] hover:text-[#FFFFFF] font-mono text-xs flex items-center gap-2 transition-colors disabled:opacity-50"
             title="Refresh Telemetry"
           >
-            <RotateCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <RotateCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             <span>Sync</span>
           </button>
         </div>
       </div>
 
-      {/* Dense Operational Statistics Strip */}
+      {/* Dense Operational Statistics Strip (20px gap, 20px padding) */}
       {stats && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-[20px]">
           <StatCard
             label="Active Invs"
             value={stats.active_investigations}
@@ -156,23 +154,23 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Main Control-Plane Split: Investigations Table/List + Selected Inspector Panel */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* Left/Center Column: Active Investigations & Recent Changes (7 Cols) */}
-        <div className="lg:col-span-8 space-y-4">
+      {/* Main Control-Plane Split: Investigations Table/List + Selected Inspector Panel (gap 20px) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-[20px]">
+        {/* Left/Center Column: Active Investigations & Recent Changes (8 Cols) */}
+        <div className="lg:col-span-8 space-y-[32px]">
           {/* Active Investigations Section */}
-          <div className="border border-[#222733] rounded bg-[#13161c] overflow-hidden">
-            <div className="px-3 py-2 border-b border-[#222733] bg-[#0e1116] flex items-center justify-between">
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2">
-                <Layers className="w-3.5 h-3.5 text-blue-400" />
+          <div className="border border-[#2a2a2a] rounded-[10px] bg-[#0a0a0a] overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-[#2a2a2a] bg-[#111111] flex items-center justify-between">
+              <span className="text-xs font-mono font-bold uppercase tracking-[1px] text-[#666666] flex items-center gap-2">
+                <Layers className="w-4 h-4 text-[#0066FF]" />
                 Active Change-Impact Investigations ({investigations.length})
               </span>
-              <span className="text-[10px] font-mono text-slate-400">
+              <span className="text-[11px] font-mono text-[#666666]">
                 Click row to inspect
               </span>
             </div>
 
-            <div className="divide-y divide-[#1e232d]">
+            <div className="divide-y divide-[#1a1a1a]">
               {investigations.map((inv) => {
                 const isSelected = selectedInvId === inv.id;
                 const isLive = inv.data_mode === 'live';
@@ -181,59 +179,59 @@ export default function Dashboard() {
                   <div
                     key={inv.id}
                     onClick={() => setSelectedInvId(inv.id)}
-                    className={`p-3 transition-colors cursor-pointer text-xs ${
+                    className={`p-[20px] transition-colors cursor-pointer text-xs min-h-[52px] ${
                       isSelected
-                        ? 'bg-[#1a2b4c] border-l-4 border-blue-500 text-white'
-                        : 'hover:bg-[#181c24] text-slate-300'
+                        ? 'bg-[#0d1117] border-l-[3px] border-[#0066FF] text-[#FFFFFF]'
+                        : 'bg-transparent hover:bg-[#0d1117] text-[#A0A0A0]'
                     }`}
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-1.5">
-                      <div className="flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
+                      <div className="flex items-center gap-2.5">
                         <span
-                          className={`px-1.5 py-0.2 rounded text-[9px] font-mono font-bold tracking-wider ${
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-wider ${
                             isLive
-                              ? 'bg-emerald-950 text-emerald-300 border border-emerald-700'
-                              : 'bg-amber-950 text-amber-300 border border-amber-700'
+                              ? 'bg-[#00FF88] text-[#000000]'
+                              : 'bg-[#FFB800] text-[#000000]'
                           }`}
                         >
-                          {isLive ? 'LIVE AWS' : 'DEMO'}
+                          {isLive ? 'LIVE' : 'DEMO'}
                         </span>
-                        <span className="font-mono font-bold text-slate-200">
+                        <span className="font-mono font-bold text-[#FFFFFF]">
                           {inv.id}
                         </span>
-                        <span className="text-slate-500">·</span>
-                        <span className="font-semibold text-slate-100 truncate max-w-[280px]">
+                        <span className="text-[#333333]">·</span>
+                        <span className="font-semibold text-[#FFFFFF] truncate max-w-[320px]">
                           {inv.title}
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-2.5 shrink-0">
                         {inv.impact_score && (
                           <ConfidenceBadge confidence={inv.impact_score.confidence} />
                         )}
-                        <span className="font-mono text-[10px] text-slate-400">
+                        <span className="font-mono text-[11px] text-[#666666]">
                           {new Date(inv.created_at).toLocaleTimeString()}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400 font-mono">
-                      <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-[#A0A0A0] font-mono">
+                      <div className="flex items-center gap-4">
                         <span>
                           ANOMALIES:{' '}
-                          <strong className="text-slate-200 font-mono">
+                          <strong className="text-[#FFFFFF] font-mono">
                             {inv.anomalies.length}
                           </strong>
                         </span>
                         <span>
                           EVIDENCE:{' '}
-                          <strong className="text-slate-200 font-mono">
+                          <strong className="text-[#FFFFFF] font-mono">
                             {inv.evidence.length}
                           </strong>
                         </span>
                         <span>
                           HINDSIGHT:{' '}
-                          <strong className="text-amber-400 font-mono">
+                          <strong className="text-[#FFB800] font-mono">
                             {inv.historical_memories.length}
                           </strong>
                         </span>
@@ -242,10 +240,10 @@ export default function Dashboard() {
                       <Link
                         href={`/investigations/${inv.id}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-1 text-[11px] font-mono text-blue-400 hover:text-blue-300 hover:underline"
+                        className="inline-flex items-center gap-1.5 text-xs font-mono text-[#0066FF] hover:underline font-semibold"
                       >
                         <span>Open Console</span>
-                        <ArrowRight className="w-3 h-3" />
+                        <ArrowRight className="w-3.5 h-3.5" />
                       </Link>
                     </div>
                   </div>
@@ -255,15 +253,15 @@ export default function Dashboard() {
           </div>
 
           {/* Recent CloudTrail Changes Table */}
-          <div className="border border-[#222733] rounded bg-[#13161c] overflow-hidden">
-            <div className="px-3 py-2 border-b border-[#222733] bg-[#0e1116] flex items-center justify-between">
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2">
-                <Zap className="w-3.5 h-3.5 text-blue-400" />
+          <div className="border border-[#2a2a2a] rounded-[10px] bg-[#0a0a0a] overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-[#2a2a2a] bg-[#111111] flex items-center justify-between">
+              <span className="text-xs font-mono font-bold uppercase tracking-[1px] text-[#666666] flex items-center gap-2">
+                <Zap className="w-4 h-4 text-[#0066FF]" />
                 Recent CloudTrail Changes ({changes.length})
               </span>
               <Link
                 href="/changes"
-                className="text-[11px] font-mono text-blue-400 hover:text-blue-300 transition-colors"
+                className="text-xs font-mono text-[#0066FF] hover:underline transition-colors font-semibold"
               >
                 View All Events →
               </Link>
@@ -271,31 +269,34 @@ export default function Dashboard() {
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs font-mono">
-                <thead className="bg-[#0a0c0f] text-slate-400 uppercase text-[10px] tracking-wider border-b border-[#222733]">
-                  <tr>
-                    <th className="py-2 px-3">Action</th>
-                    <th className="py-2 px-3">Service</th>
-                    <th className="py-2 px-3">Resource</th>
-                    <th className="py-2 px-3">Actor</th>
-                    <th className="py-2 px-3">Time</th>
+                <thead className="bg-[#111111] text-[#666666] uppercase text-[11px] tracking-[1px] border-b border-[#2a2a2a]">
+                  <tr className="h-[44px]">
+                    <th className="py-2.5 px-4 font-semibold">Action</th>
+                    <th className="py-2.5 px-4 font-semibold">Service</th>
+                    <th className="py-2.5 px-4 font-semibold">Resource</th>
+                    <th className="py-2.5 px-4 font-semibold">Actor</th>
+                    <th className="py-2.5 px-4 font-semibold">Time</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#1e232d] text-slate-300">
+                <tbody className="divide-y divide-[#1a1a1a] text-[#A0A0A0]">
                   {changes.slice(0, 6).map((chg) => (
-                    <tr key={chg.id} className="hover:bg-[#181c24] transition-colors">
-                      <td className="py-2 px-3 font-bold text-slate-100">
+                    <tr
+                      key={chg.id}
+                      className="h-[52px] min-h-[52px] hover:bg-[#0d1117] transition-colors"
+                    >
+                      <td className="py-3 px-4 font-bold text-[#FFFFFF]">
                         {chg.action}
                       </td>
-                      <td className="py-2 px-3">
+                      <td className="py-3 px-4">
                         <SourceBadge source={chg.service} />
                       </td>
-                      <td className="py-2 px-3 text-slate-300 truncate max-w-[180px]" title={chg.resource_name}>
+                      <td className="py-3 px-4 text-[#A0A0A0] truncate max-w-[200px]" title={chg.resource_name}>
                         {chg.resource_name}
                       </td>
-                      <td className="py-2 px-3 text-slate-400 truncate max-w-[140px]" title={chg.actor_id}>
+                      <td className="py-3 px-4 text-[#666666] truncate max-w-[160px]" title={chg.actor_id}>
                         {chg.actor_id}
                       </td>
-                      <td className="py-2 px-3 text-slate-400 text-[10px]">
+                      <td className="py-3 px-4 text-[#666666] text-[11px]">
                         {new Date(chg.timestamp).toLocaleTimeString()}
                       </td>
                     </tr>
@@ -307,31 +308,31 @@ export default function Dashboard() {
         </div>
 
         {/* Right Inspector Panel: Selected Investigation Details (4 Cols) */}
-        <div className="lg:col-span-4 space-y-4">
-          <div className="border border-[#222733] rounded bg-[#13161c] overflow-hidden sticky top-4">
-            <div className="px-3 py-2 border-b border-[#222733] bg-[#0e1116] flex items-center justify-between">
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-200">
+        <div className="lg:col-span-4 space-y-[20px]">
+          <div className="border border-[#2a2a2a] rounded-[10px] bg-[#0a0a0a] p-[20px] space-y-[20px] sticky top-6">
+            <div className="flex items-center justify-between border-b border-[#2a2a2a] pb-3">
+              <span className="text-[11px] font-mono font-bold uppercase tracking-[1px] text-[#666666]">
                 Investigation Inspector
               </span>
               {selectedInvestigation && (
-                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#1e232d] text-slate-300">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#111111] text-[#A0A0A0] border border-[#2a2a2a]">
                   {selectedInvestigation.id}
                 </span>
               )}
             </div>
 
             {selectedInvestigation ? (
-              <div className="p-3.5 space-y-4 text-xs">
+              <div className="space-y-[20px] text-xs">
                 {/* Identity & Status */}
                 <div>
-                  <div className="text-[10px] font-mono uppercase text-slate-400">
+                  <div className="text-[11px] font-mono uppercase tracking-[1px] text-[#666666]">
                     Incident Title
                   </div>
-                  <div className="font-bold text-slate-100 mt-0.5 text-sm">
+                  <div className="font-bold text-[#FFFFFF] mt-1 text-sm font-sans">
                     {selectedInvestigation.title}
                   </div>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="px-1.5 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-800 text-[10px] font-mono font-bold uppercase">
+                  <div className="flex items-center gap-2 mt-2.5">
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#00FF88]/15 text-[#00FF88] border border-[#00FF88]/30 text-[10px] font-mono font-bold uppercase">
                       {selectedInvestigation.status}
                     </span>
                     {selectedInvestigation.impact_score && (
@@ -342,39 +343,39 @@ export default function Dashboard() {
 
                 {/* Score breakdown */}
                 {selectedInvestigation.impact_score && (
-                  <div className="p-2.5 rounded bg-[#0d0f12] border border-[#222733] space-y-2">
+                  <div className="p-3.5 rounded-[8px] bg-[#111111] border border-[#2a2a2a] space-y-2.5">
                     <div className="flex items-baseline justify-between">
-                      <span className="text-[10px] font-mono uppercase text-slate-400">
+                      <span className="text-[11px] font-mono uppercase tracking-[1px] text-[#666666]">
                         Evidence Impact Score
                       </span>
-                      <span className="text-base font-bold font-mono text-blue-400">
+                      <span className="text-lg font-bold font-mono text-[#0066FF]">
                         {selectedInvestigation.impact_score.overall.toFixed(2)}{' '}
-                        <span className="text-[10px] text-slate-400 font-normal">/ 1.00</span>
+                        <span className="text-[10px] text-[#666666] font-normal">/ 1.00</span>
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-1.5 text-[10px] font-mono text-slate-400">
-                      <div className="flex justify-between border-b border-[#1f242e] pb-0.5">
-                        <span>Metric Sev (35%):</span>
-                        <span className="text-slate-200 font-bold">
+                    <div className="grid grid-cols-2 gap-2 text-[11px] font-mono text-[#666666]">
+                      <div className="flex justify-between border-b border-[#1a1a1a] pb-1">
+                        <span>Metric (35%):</span>
+                        <span className="text-[#FFFFFF] font-bold">
                           {selectedInvestigation.impact_score.metric_severity.toFixed(2)}
                         </span>
                       </div>
-                      <div className="flex justify-between border-b border-[#1f242e] pb-0.5">
+                      <div className="flex justify-between border-b border-[#1a1a1a] pb-1">
                         <span>Temporal (25%):</span>
-                        <span className="text-slate-200 font-bold">
+                        <span className="text-[#FFFFFF] font-bold">
                           {selectedInvestigation.impact_score.temporal_proximity.toFixed(2)}
                         </span>
                       </div>
-                      <div className="flex justify-between border-b border-[#1f242e] pb-0.5">
+                      <div className="flex justify-between border-b border-[#1a1a1a] pb-1">
                         <span>Topology (20%):</span>
-                        <span className="text-slate-200 font-bold">
+                        <span className="text-[#FFFFFF] font-bold">
                           {selectedInvestigation.impact_score.dependency_weight.toFixed(2)}
                         </span>
                       </div>
-                      <div className="flex justify-between border-b border-[#1f242e] pb-0.5">
+                      <div className="flex justify-between border-b border-[#1a1a1a] pb-1">
                         <span>Actor (10%):</span>
-                        <span className="text-slate-200 font-bold">
+                        <span className="text-[#FFFFFF] font-bold">
                           {selectedInvestigation.impact_score.actor_context.toFixed(2)}
                         </span>
                       </div>
@@ -384,31 +385,31 @@ export default function Dashboard() {
 
                 {/* Hypothesis */}
                 {selectedInvestigation.hypothesis && (
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-mono uppercase text-slate-400 font-semibold block">
+                  <div className="space-y-1.5">
+                    <span className="text-[11px] font-mono uppercase tracking-[1px] text-[#666666] font-semibold block">
                       Evidence-Supported Hypothesis
                     </span>
-                    <p className="text-[11px] text-slate-300 leading-relaxed p-2.5 rounded bg-[#0d0f12] border border-[#222733]">
+                    <p className="text-xs text-[#A0A0A0] leading-relaxed p-3 rounded-[8px] bg-[#111111] border border-[#2a2a2a] font-sans">
                       {selectedInvestigation.hypothesis}
                     </p>
                   </div>
                 )}
 
                 {/* Anomalies list */}
-                <div className="space-y-1.5">
-                  <span className="text-[10px] font-mono uppercase text-slate-400 font-semibold block">
+                <div className="space-y-2">
+                  <span className="text-[11px] font-mono uppercase tracking-[1px] text-[#666666] font-semibold block">
                     Correlated Metric Anomalies ({selectedInvestigation.anomalies.length})
                   </span>
-                  <div className="space-y-1 font-mono text-[11px]">
+                  <div className="space-y-1.5 font-mono text-xs">
                     {selectedInvestigation.anomalies.slice(0, 4).map((a) => (
                       <div
                         key={a.id}
-                        className="p-1.5 rounded bg-[#0d0f12] border border-[#1f242e] flex items-center justify-between"
+                        className="p-2.5 rounded-[8px] bg-[#111111] border border-[#2a2a2a] flex items-center justify-between"
                       >
-                        <span className="text-slate-300 truncate max-w-[180px]">
+                        <span className="text-[#A0A0A0] truncate max-w-[190px]">
                           {a.resource_name} · {a.metric_name}
                         </span>
-                        <span className="text-rose-400 font-bold shrink-0">
+                        <span className="text-[#FF3366] font-bold shrink-0">
                           {a.deviation_pct >= 0 ? `+${a.deviation_pct.toFixed(0)}%` : `${a.deviation_pct.toFixed(0)}%`}
                         </span>
                       </div>
@@ -417,18 +418,18 @@ export default function Dashboard() {
                 </div>
 
                 {/* Quick actions */}
-                <div className="pt-2 border-t border-[#222733]">
+                <div className="pt-2 border-t border-[#2a2a2a]">
                   <Link
                     href={`/investigations/${selectedInvestigation.id}`}
-                    className="w-full py-2 px-3 rounded bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                    className="w-full h-[44px] min-h-[44px] rounded-[8px] bg-[#0066FF] hover:bg-[#0052CC] text-[#FFFFFF] font-mono text-xs font-semibold flex items-center justify-center gap-2 transition-colors"
                   >
                     <span>Inspect Blast-Radius & Timeline</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>
               </div>
             ) : (
-              <div className="p-8 text-center text-xs text-slate-500 font-mono">
+              <div className="py-8 text-center text-xs text-[#666666] font-mono">
                 Select an investigation to inspect details.
               </div>
             )}

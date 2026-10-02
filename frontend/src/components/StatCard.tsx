@@ -18,22 +18,24 @@ export const StatCard: React.FC<Props> = ({
 }) => {
   return (
     <div
-      className={`p-3 rounded border transition-colors bg-[#13161c] ${
+      className={`p-[20px] rounded-[10px] border transition-colors bg-[#0a0a0a] ${
         highlight
-          ? 'border-blue-500/50 bg-[#161a24]'
-          : 'border-[#222733] hover:border-[#2f3646]'
+          ? 'border-[#0066FF]/60 bg-[#0d1117]'
+          : 'border-[#2a2a2a] hover:border-[#3a3a3a]'
       }`}
     >
-      <div className="flex items-center justify-between text-slate-400">
-        <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400">
+      <div className="flex items-center justify-between">
+        <span className="text-[12px] uppercase font-mono tracking-wider text-[#666666] font-semibold">
           {label}
         </span>
-        <Icon className={`w-3.5 h-3.5 ${highlight ? 'text-blue-400' : 'text-slate-500'}`} />
+        <Icon className="w-4 h-4 text-[#0066FF]/60" />
       </div>
-      <div className="mt-2 flex items-baseline gap-2">
-        <span className="text-xl font-bold font-mono text-slate-100">{value}</span>
+      <div className="mt-3 flex items-baseline gap-2">
+        <span className="text-[32px] font-bold font-mono text-[#FFFFFF] leading-none">
+          {value}
+        </span>
         {subtext && (
-          <span className="text-[10px] font-mono text-slate-500 uppercase">
+          <span className="text-[11px] font-mono text-[#666666] uppercase">
             {subtext}
           </span>
         )}

@@ -9,26 +9,32 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background: '#0d0f12',
-        surface: {
-          DEFAULT: '#13161c',
-          raised: '#181c24',
-          overlay: '#1e232d',
-          subtle: '#101318',
+        pure: {
+          black: '#000000',
+          panel: '#0a0a0a',
+          input: '#111111',
+          hover: '#1a1a1a',
+          selected: '#0d1117',
+          border: '#2a2a2a',
+          'border-muted': '#1a1a1a',
+          divider: '#333333',
         },
-        border: {
-          DEFAULT: '#222733',
-          muted: '#1b1f29',
-          active: '#3b82f6',
+        accent: {
+          blue: '#0066FF',
+          'blue-hover': '#0052CC',
+          green: '#00FF88',
+          amber: '#FFB800',
+          red: '#FF3366',
         },
-        console: {
-          bg: '#0a0c0f',
-          sidebar: '#0e1116',
-          panel: '#13161c',
-          border: '#1f242e',
-          hover: '#191d26',
-          selected: '#1e3a8a',
+        tx: {
+          primary: '#FFFFFF',
+          secondary: '#A0A0A0',
+          muted: '#666666',
         },
+      },
+      borderRadius: {
+        card: '10px',
+        btn: '8px',
       },
       fontFamily: {
         mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
