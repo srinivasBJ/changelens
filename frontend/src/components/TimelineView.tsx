@@ -25,8 +25,8 @@ export const TimelineView: React.FC<Props> = ({ events }) => {
       case 'AGENT':
         return {
           icon: Cpu,
-          badge: 'bg-[#A0A0A0]/15 text-[#A0A0A0] border-[#A0A0A0]/30',
-          dot: 'bg-[#A0A0A0]',
+          badge: 'bg-[#A8A8A8]/15 text-[#A8A8A8] border-[#A8A8A8]/30',
+          dot: 'bg-[#A8A8A8]',
         };
       case 'APPROVAL':
         return {
@@ -51,8 +51,8 @@ export const TimelineView: React.FC<Props> = ({ events }) => {
       default:
         return {
           icon: Clock,
-          badge: 'bg-[#2a2a2a] text-[#A0A0A0] border-[#333333]',
-          dot: 'bg-[#666666]',
+          badge: 'bg-[#3a3a3a] text-[#A8A8A8] border-[#444444]',
+          dot: 'bg-[#7A7A7A]',
         };
     }
   };
@@ -68,21 +68,21 @@ export const TimelineView: React.FC<Props> = ({ events }) => {
 
   return (
     <div className="space-y-[20px]">
-      <div className="flex items-center justify-between text-xs font-mono text-[#666666] border-b border-[#2a2a2a] pb-3">
-        <span className="uppercase tracking-[1px] font-semibold">CHRONOLOGICAL MULTI-LANE EVIDENCE TIMELINE</span>
+      <div className="flex items-center justify-between text-[11px] font-sans font-semibold text-[#7A7A7A] border-b border-[#3a3a3a] pb-3">
+        <span className="uppercase tracking-[0.08em]">Chronological Multi-Lane Evidence Timeline</span>
         <div className="flex items-center gap-4">
           <span className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#0066FF]" />
-            <span className="text-[#A0A0A0]">LIVE EVIDENCE</span>
+            <span className="text-[#A8A8A8] font-normal">Live Evidence</span>
           </span>
           <span className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#FFB800]" />
-            <span className="text-[#A0A0A0]">HISTORICAL MEMORY</span>
+            <span className="text-[#A8A8A8] font-normal">Historical Memory</span>
           </span>
         </div>
       </div>
 
-      <div className="relative pl-6 space-y-[20px] before:absolute before:left-2 before:top-3 before:bottom-3 before:w-[2px] before:bg-[#1a1a1a]">
+      <div className="relative pl-6 space-y-[20px] before:absolute before:left-2 before:top-3 before:bottom-3 before:w-[2px] before:bg-[#333333]">
         {events.map((evt, idx) => {
           const meta = getLaneMeta(evt.lane);
           const Icon = meta.icon;
@@ -91,10 +91,10 @@ export const TimelineView: React.FC<Props> = ({ events }) => {
           return (
             <div
               key={idx}
-              className={`relative rounded-[10px] p-[20px] text-xs transition-colors ${
+              className={`relative rounded-[10px] p-[20px] text-[13px] transition-colors ${
                 isHistorical
-                  ? 'border border-dashed border-[#FFB800]/50 bg-[#0a0a0a]'
-                  : 'border border-[#2a2a2a] bg-[#0a0a0a] hover:bg-[#111111]'
+                  ? 'border border-dashed border-[#FFB800]/50 bg-[#1f1f1f]'
+                  : 'border border-[#3a3a3a] bg-[#1f1f1f] hover:bg-[#252525]'
               }`}
             >
               {/* 8px diameter time indicator dot */}
@@ -104,17 +104,17 @@ export const TimelineView: React.FC<Props> = ({ events }) => {
 
               <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                 <div className="flex items-center gap-2.5">
-                  <span className="font-mono text-xs font-bold text-[#FFFFFF]">
+                  <span className="font-mono text-[12px] font-bold text-[#D6D6D6] tabular">
                     {formatTime(evt.timestamp)}
                   </span>
                   <span
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider border ${meta.badge}`}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-sans font-semibold tracking-[0.06em] uppercase border ${meta.badge}`}
                   >
                     <Icon className="w-3 h-3" />
                     {evt.lane}
                   </span>
                   {isHistorical && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#FFB800] text-[#000000]">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-sans font-semibold tracking-[0.06em] bg-[#FFB800] text-[#000000]">
                       HISTORICAL CONTEXT
                     </span>
                   )}
@@ -122,10 +122,10 @@ export const TimelineView: React.FC<Props> = ({ events }) => {
                 <SourceBadge source={evt.source} />
               </div>
 
-              <h4 className="text-sm font-bold text-[#FFFFFF] font-mono">
+              <h3 className="text-[15px] font-semibold text-[#D6D6D6] font-sans">
                 {evt.title}
-              </h4>
-              <p className="mt-1.5 text-xs text-[#A0A0A0] leading-relaxed font-sans">
+              </h3>
+              <p className="mt-1.5 text-[13px] text-[#A8A8A8] leading-[1.55] font-sans prose-limit">
                 {evt.description}
               </p>
             </div>

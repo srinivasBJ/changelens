@@ -27,7 +27,7 @@ export const SourceBadge: React.FC<Props> = ({ source }) => {
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-mono uppercase font-semibold border ${getBadge()}`}
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-sans uppercase font-semibold tracking-[0.06em] border ${getBadge()}`}
     >
       {source}
     </span>

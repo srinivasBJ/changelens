@@ -9,14 +9,14 @@ export const ModeBadge: React.FC<Props> = ({ mode = 'demo' }) => {
 
   return (
     <div
-      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-extrabold tracking-wider ${
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-sans font-semibold tracking-[0.06em] uppercase ${
         isDemo
           ? 'bg-[#FFB800] text-[#000000]'
           : 'bg-[#00FF88] text-[#000000]'
       }`}
     >
       <span
-        className={`w-2 h-2 rounded-full ${
+        className={`w-1.5 h-1.5 rounded-full ${
           isDemo ? 'bg-[#000000]' : 'bg-[#000000]'
         }`}
       />

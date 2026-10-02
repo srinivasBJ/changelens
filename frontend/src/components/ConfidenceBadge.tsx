@@ -21,7 +21,7 @@ export const ConfidenceBadge: React.FC<Props> = ({ confidence = 'insufficient' }
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold tracking-wider border uppercase ${getStyles()}`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-sans font-semibold tracking-[0.06em] border uppercase ${getStyles()}`}
     >
       <span className="w-1.5 h-1.5 rounded-full bg-current" />
       CONFIDENCE: {confidence}
