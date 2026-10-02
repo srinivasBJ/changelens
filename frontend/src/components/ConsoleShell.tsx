@@ -65,6 +65,22 @@ export const ConsoleShell: React.FC<Props> = ({ children }) => {
                 Console Navigation
               </div>
               <Link
+                href="/investigations/inv_live_001"
+                className={`flex items-center justify-between h-[40px] px-3 rounded-[6px] text-[13px] font-sans font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#58A6FF] ${
+                  pathname.includes('inv_live_001')
+                    ? 'bg-[#2F6FAD] hover:bg-[#3579BD] text-[#FFFFFF] font-semibold'
+                    : 'text-[#A1A1AA] hover:text-[#ECECEC] hover:bg-[#232327]'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className="w-2 h-2 rounded-full bg-[#3FB950] shrink-0" />
+                  <span className="font-semibold">Live Investigation</span>
+                </div>
+                <span className="text-[10px] font-sans font-semibold tracking-[0.06em] px-2 py-0.5 rounded-full bg-[rgba(63,185,80,0.15)] text-[#3FB950] uppercase border border-[rgba(63,185,80,0.3)]">
+                  LIVE
+                </span>
+              </Link>
+              <Link
                 href="/"
                 className={`flex items-center justify-between h-[40px] px-3 rounded-[6px] text-[13px] font-sans font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#58A6FF] ${
                   pathname === '/'
@@ -78,38 +94,6 @@ export const ConsoleShell: React.FC<Props> = ({ children }) => {
                 </div>
               </Link>
               <Link
-                href="/investigations/inv_live_001"
-                className={`flex items-center justify-between h-[40px] px-3 rounded-[6px] text-[13px] font-sans font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#58A6FF] ${
-                  pathname.includes('inv_live_001')
-                    ? 'bg-[#2F6FAD] hover:bg-[#3579BD] text-[#FFFFFF] font-semibold'
-                    : 'text-[#A1A1AA] hover:text-[#ECECEC] hover:bg-[#232327]'
-                }`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className="w-2 h-2 rounded-full bg-[#3FB950] shrink-0" />
-                  <span>Live Investigation</span>
-                </div>
-                <span className="text-[10px] font-sans font-semibold tracking-[0.06em] px-2 py-0.5 rounded-full bg-[rgba(63,185,80,0.15)] text-[#3FB950] uppercase border border-[rgba(63,185,80,0.3)]">
-                  LIVE
-                </span>
-              </Link>
-              <Link
-                href="/investigations/inv_demo_001"
-                className={`flex items-center justify-between h-[40px] px-3 rounded-[6px] text-[13px] font-sans font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#58A6FF] ${
-                  pathname.includes('inv_demo_001')
-                    ? 'bg-[#2F6FAD] hover:bg-[#3579BD] text-[#FFFFFF] font-semibold'
-                    : 'text-[#A1A1AA] hover:text-[#ECECEC] hover:bg-[#232327]'
-                }`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Layers className="w-4 h-4" />
-                  <span>Demo Investigation</span>
-                </div>
-                <span className="text-[10px] font-sans font-semibold tracking-[0.06em] px-2 py-0.5 rounded-full bg-[rgba(210,153,34,0.15)] text-[#D29922] uppercase border border-[rgba(210,153,34,0.3)]">
-                  DEMO
-                </span>
-              </Link>
-              <Link
                 href="/changes"
                 className={`flex items-center justify-between h-[40px] px-3 rounded-[6px] text-[13px] font-sans font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#58A6FF] ${
                   pathname.startsWith('/changes')
@@ -121,6 +105,29 @@ export const ConsoleShell: React.FC<Props> = ({ children }) => {
                   <Zap className="w-4 h-4" />
                   <span>CloudTrail Changes</span>
                 </div>
+              </Link>
+            </div>
+
+            {/* Secondary / Simulated Sandboxes */}
+            <div className="space-y-1 pt-2 border-t border-[#2A2A2F]">
+              <div className="px-2.5 pb-1 text-[11px] font-sans font-semibold uppercase tracking-[0.06em] text-[#71717A]">
+                Simulated Sandbox
+              </div>
+              <Link
+                href="/investigations/inv_demo_001"
+                className={`flex items-center justify-between h-[40px] px-3 rounded-[6px] text-[13px] font-sans font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#58A6FF] ${
+                  pathname.includes('inv_demo_001')
+                    ? 'bg-[#2F6FAD] hover:bg-[#3579BD] text-[#FFFFFF] font-semibold'
+                    : 'text-[#A1A1AA] hover:text-[#ECECEC] hover:bg-[#232327]'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Layers className="w-4 h-4 text-[#71717A]" />
+                  <span>Demo Investigation</span>
+                </div>
+                <span className="text-[10px] font-sans font-semibold tracking-[0.06em] px-2 py-0.5 rounded-full bg-[rgba(210,153,34,0.15)] text-[#D29922] uppercase border border-[rgba(210,153,34,0.3)]">
+                  DEMO
+                </span>
               </Link>
             </div>
 

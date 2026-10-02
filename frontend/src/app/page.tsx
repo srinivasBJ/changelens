@@ -37,10 +37,27 @@ export default function Dashboard() {
         getChanges(),
       ]);
       setStats(s);
-      setInvestigations(invs);
+
+      // Prioritize LIVE investigations first (inv_live_001 primary)
+      const sortedInvs = [...invs].sort((a, b) => {
+        if (a.id === 'inv_live_001') return -1;
+        if (b.id === 'inv_live_001') return 1;
+        const aIsLive = a.data_mode === 'live' && a.id !== 'inv_demo_001';
+        const bIsLive = b.data_mode === 'live' && b.id !== 'inv_demo_001';
+        if (aIsLive && !bIsLive) return -1;
+        if (!aIsLive && bIsLive) return 1;
+        return 0;
+      });
+
+      setInvestigations(sortedInvs);
       setChanges(chgs);
-      if (invs.length > 0 && !invs.some((i) => i.id === selectedInvId)) {
-        setSelectedInvId(invs[0].id);
+
+      // Default selection to inv_live_001 if available
+      const liveCase = sortedInvs.find((i) => i.id === 'inv_live_001') || sortedInvs.find((i) => i.data_mode === 'live' && i.id !== 'inv_demo_001');
+      if (liveCase && (!selectedInvId || selectedInvId === 'inv_demo_001' || !sortedInvs.some((i) => i.id === selectedInvId))) {
+        setSelectedInvId(liveCase.id);
+      } else if (sortedInvs.length > 0 && !sortedInvs.some((i) => i.id === selectedInvId)) {
+        setSelectedInvId(sortedInvs[0].id);
       }
     } catch (e) {
       console.error('Failed to load dashboard data:', e);
@@ -171,7 +188,7 @@ export default function Dashboard() {
             <div className="divide-y divide-[#2A2A2F]">
               {investigations.map((inv) => {
                 const isSelected = selectedInvId === inv.id;
-                const isLive = inv.data_mode === 'live';
+                const isLive = inv.id === 'inv_live_001' || (inv.data_mode === 'live' && inv.id !== 'inv_demo_001');
 
                 return (
                   <div
@@ -186,7 +203,7 @@ export default function Dashboard() {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
                       <div className="flex items-center gap-2.5">
                         <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-sans font-bold tracking-wider border ${
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-sans font-bold tracking-wider border flex items-center gap-1.5 ${
                             isSelected
                               ? 'bg-white/20 text-white border-white/30'
                               : isLive
@@ -194,6 +211,7 @@ export default function Dashboard() {
                               : 'bg-[rgba(210,153,34,0.15)] text-[#D29922] border-[rgba(210,153,34,0.3)]'
                           }`}
                         >
+                          <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : isLive ? 'bg-[#3FB950]' : 'bg-[#D29922]'}`} />
                           {isLive ? 'LIVE' : 'DEMO'}
                         </span>
                         <span className={`font-mono text-[12px] font-bold ${isSelected ? 'text-[#FFFFFF]' : 'text-[#ECECEC]'}`}>
@@ -335,14 +353,27 @@ export default function Dashboard() {
                   <div className="font-sans font-semibold text-[#ECECEC] mt-1 text-[14px]">
                     {selectedInvestigation.title}
                   </div>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="px-2 py-0.5 rounded-full bg-[rgba(63,185,80,0.15)] text-[#3FB950] border border-[rgba(63,185,80,0.3)] text-[10px] font-sans font-bold uppercase">
-                      {selectedInvestigation.status}
-                    </span>
-                    {selectedInvestigation.impact_score && (
-                      <ConfidenceBadge confidence={selectedInvestigation.impact_score.confidence} />
-                    )}
-                  </div>
+                  {(() => {
+                    const isSelectedLive = selectedInvestigation.id === 'inv_live_001' || (selectedInvestigation.data_mode === 'live' && selectedInvestigation.id !== 'inv_demo_001');
+                    return (
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-sans font-bold uppercase border flex items-center gap-1.5 ${
+                          isSelectedLive
+                            ? 'bg-[rgba(63,185,80,0.15)] text-[#3FB950] border-[rgba(63,185,80,0.3)]'
+                            : 'bg-[rgba(210,153,34,0.15)] text-[#D29922] border-[rgba(210,153,34,0.3)]'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${isSelectedLive ? 'bg-[#3FB950]' : 'bg-[#D29922]'}`} />
+                          {isSelectedLive ? 'LIVE AWS INCIDENT' : 'DEMO SCENARIO'}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-sans font-semibold uppercase bg-[#232327] text-[#A1A1AA] border border-[#2A2A2F]">
+                          {selectedInvestigation.status}
+                        </span>
+                        {selectedInvestigation.impact_score && (
+                          <ConfidenceBadge confidence={selectedInvestigation.impact_score.confidence} />
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Score breakdown */}
@@ -427,7 +458,11 @@ export default function Dashboard() {
                     href={`/investigations/${selectedInvestigation.id}`}
                     className="w-full h-[40px] rounded-[6px] bg-[#2F6FAD] hover:bg-[#3579BD] text-[#FFFFFF] font-sans text-[13px] font-medium flex items-center justify-center gap-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#58A6FF]"
                   >
-                    <span>Inspect Blast-Radius & Timeline</span>
+                    <span>
+                      {selectedInvestigation.id === 'inv_live_001' || (selectedInvestigation.data_mode === 'live' && selectedInvestigation.id !== 'inv_demo_001')
+                        ? 'Inspect Live Blast-Radius & Timeline'
+                        : 'Inspect Demo Blast-Radius & Timeline'}
+                    </span>
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>

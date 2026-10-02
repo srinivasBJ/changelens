@@ -108,7 +108,7 @@ export default function InvestigationDetailPage() {
     );
   }
 
-  const isLive = inv.data_mode === 'live';
+  const isLive = inv.id === 'inv_live_001' || (inv.data_mode === 'live' && inv.id !== 'inv_demo_001');
 
   return (
     <div className="space-y-6">
@@ -134,7 +134,15 @@ export default function InvestigationDetailPage() {
               <h1 className="text-[24px] font-sans font-semibold text-[#ECECEC] leading-[1.3] tracking-[-0.015em]">
                 {inv.title}
               </h1>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-sans font-bold uppercase bg-[rgba(63,185,80,0.15)] text-[#3FB950] border border-[rgba(63,185,80,0.3)]">
+              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-sans font-bold uppercase border flex items-center gap-1.5 ${
+                isLive
+                  ? 'bg-[rgba(63,185,80,0.15)] text-[#3FB950] border-[rgba(63,185,80,0.3)]'
+                  : 'bg-[rgba(210,153,34,0.15)] text-[#D29922] border-[rgba(210,153,34,0.3)]'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-[#3FB950]' : 'bg-[#D29922]'}`} />
+                {isLive ? 'LIVE INCIDENT' : 'DEMO SCENARIO'}
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-sans font-semibold uppercase bg-[#232327] text-[#A1A1AA] border border-[#2A2A2F]">
                 {inv.status}
               </span>
               {inv.impact_score && (
