@@ -195,22 +195,22 @@ The ChangeLens user interface is built on **SPEC v2: Pure Black (`#0A0A0B`) + Si
 
 ---
 
-### 2. Live Investigation & Blast-Radius Graph
-*The primary investigation view (`/investigations/inv_live_001`) showing the topological canvas, node inspector, and edge corroboration with live CloudTrail changes.*
+### 2. Live Incident Correlation & Impact Scoring
+*The primary investigation view (`/investigations/inv_live_001`) showing verified incident state, 5-component impact score breakdown, and live AWS CloudTrail + CloudWatch telemetry.*
 
 ![Live Investigation](docs/screenshots/live_investigation.png)
 
 ---
 
-### 3. Causal Hypothesis & Explainable Impact Scoring
-*Detailed breakdown of the 5-component impact formula, high-confidence synthesis, and multi-node blast radius.*
+### 3. Topological Blast Radius & Causal Path Highlights
+*Dynamic blast-radius topology with AWS service identity accents (Lambda, API Gateway, DynamoDB), causal hover path illumination, and corroborated dependency edges.*
 
 ![Impact Scoring & Blast Radius](docs/screenshots/blast_radius_investigation.png)
 
 ---
 
 ### 4. CloudTrail Infrastructure Changes Stream
-*Normalized stream of CloudTrail events with actor classification (Human vs. Automation vs. Agent) and raw event payload inspection.*
+*Normalized stream of CloudTrail events with actor classification, LIVE vs SEEDED provenance, and raw event payload inspection.*
 
 ![CloudTrail Changes Stream](docs/screenshots/cloudtrail_changes.png)
 
