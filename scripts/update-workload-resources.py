@@ -137,7 +137,7 @@ def print_cli_commands():
     print("MANUAL / CLI UPDATE COMMANDS:")
     print("----------------------------------------------------------------")
     print("# 1. Zip the handler:")
-    print("cd infrastructure && zip -r function.zip lambda_handler.py && cd ..")
+    print("cd infrastructure && zip -r function.zip lambda_function.py && cd ..")
     print("")
     print("# 2. Update checkout-function code:")
     print("aws lambda update-function-code \\")
