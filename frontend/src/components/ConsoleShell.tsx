@@ -47,8 +47,8 @@ export const ConsoleShell: React.FC<Props> = ({ children }) => {
 
         <div className="flex items-center gap-3">
           <div className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-[6px] bg-[#17171A] border border-[#2A2A2F] text-[12px] font-sans text-[#A1A1AA]">
-            <span className="w-2 h-2 rounded-full bg-[#3FB950]" />
-            <span className="font-medium text-[#ECECEC]">Hindsight: Active</span>
+            <span className="w-2 h-2 rounded-full bg-[#D29922]" />
+            <span className="font-medium text-[#ECECEC]">Memory: Local Fallback</span>
           </div>
           <ModeBadge mode={process.env.NEXT_PUBLIC_APP_MODE || 'live'} />
         </div>
@@ -166,8 +166,8 @@ export const ConsoleShell: React.FC<Props> = ({ children }) => {
                 <span className="font-mono text-[11px] text-[#3FB950] font-medium">METRICS</span>
               </div>
               <div className="px-2.5 py-1.5 text-[12px] text-[#A1A1AA] flex items-center justify-between">
-                <span>Hindsight</span>
-                <span className="font-mono text-[11px] text-[#3FB950] font-medium">RECALL</span>
+                <span>Memory Bank</span>
+                <span className="font-mono text-[11px] text-[#D29922] font-medium">FALLBACK</span>
               </div>
             </div>
           </div>
