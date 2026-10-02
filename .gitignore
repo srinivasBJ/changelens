@@ -48,3 +48,4 @@ docker-compose.override.yml
 
 # Artifacts
 *.log
+*.zip

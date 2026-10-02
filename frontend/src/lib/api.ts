@@ -9,7 +9,12 @@ import {
   TimelineEvent,
 } from './types';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL !== undefined
+    ? process.env.NEXT_PUBLIC_API_URL
+    : typeof window !== 'undefined'
+    ? ''
+    : 'http://127.0.0.1:8000';
 
 async function fetchJson<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = `${API_BASE}${endpoint}`;
