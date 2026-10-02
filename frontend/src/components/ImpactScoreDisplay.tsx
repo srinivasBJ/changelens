@@ -19,57 +19,60 @@ export const ImpactScoreDisplay: React.FC<Props> = ({ score }) => {
   ];
 
   return (
-    <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/90 shadow-xl space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+    <div className="p-4 rounded border border-[#222733] bg-[#13161c] space-y-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-[#222733]">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xs uppercase font-bold tracking-wider text-slate-400">
+            <span className="text-[11px] font-mono uppercase font-bold tracking-wider text-slate-400">
               Evidence-Weighted Impact Score
             </span>
             <div className="group relative">
-              <Info className="w-3.5 h-3.5 text-slate-400 cursor-pointer" />
-              <div className="hidden group-hover:block absolute left-0 bottom-full mb-2 w-64 p-2 bg-slate-800 text-xs rounded text-slate-300 shadow-xl z-20">
+              <Info className="w-3.5 h-3.5 text-slate-500 cursor-pointer" />
+              <div className="hidden group-hover:block absolute left-0 bottom-full mb-1 w-64 p-2 bg-[#1c202a] border border-[#2e3544] text-[11px] font-mono rounded text-slate-300 shadow-xl z-30">
                 Transparent multi-factor heuristic scoring. Not a causal certainty claim.
               </div>
             </div>
           </div>
-          <div className="flex items-baseline gap-3 mt-1">
-            <span className="text-4xl font-extrabold font-mono text-indigo-400">
+          <div className="flex items-baseline gap-2 mt-1">
+            <span className="text-3xl font-bold font-mono text-blue-400">
               {score.overall.toFixed(2)}
             </span>
-            <span className="text-sm text-slate-400">/ 1.00</span>
+            <span className="text-xs font-mono text-slate-500">/ 1.00</span>
           </div>
         </div>
         <ConfidenceBadge confidence={score.confidence} />
       </div>
 
-      <div className="space-y-3">
-        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-          Component Breakdown
+      <div className="space-y-2">
+        <span className="text-[10px] font-mono uppercase font-semibold text-slate-400 tracking-wider">
+          Score Component Breakdown
         </span>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
           {factors.map((f) => (
-            <div key={f.label} className="p-3 rounded-lg bg-slate-950/60 border border-slate-800/80">
-              <div className="flex justify-between items-center text-xs mb-1.5">
-                <span className="font-medium text-slate-300">{f.label}</span>
-                <span className="font-mono text-indigo-300 font-bold">
-                  {f.value.toFixed(2)} <span className="text-[10px] text-slate-400 font-normal">({f.weight})</span>
+            <div key={f.label} className="p-2.5 rounded bg-[#0d0f12] border border-[#1f242e] space-y-1.5">
+              <div className="flex justify-between items-center text-[11px] font-mono">
+                <span className="text-slate-400 truncate">{f.label}</span>
+                <span className="text-slate-200 font-bold">
+                  {f.value.toFixed(2)}
                 </span>
               </div>
-              <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <div className="w-full h-1 bg-[#1e2430] rounded-sm overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500"
+                  className="h-full bg-blue-500 rounded-sm"
                   style={{ width: `${Math.min(f.value * 100, 100)}%` }}
                 />
+              </div>
+              <div className="text-[9px] font-mono text-slate-500 text-right">
+                Weight: {f.weight}
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="p-3.5 rounded-lg bg-indigo-950/30 border border-indigo-500/20 text-xs leading-relaxed text-indigo-200">
-        <span className="font-semibold text-indigo-300 mr-1.5 uppercase tracking-wide">
-          Synthesis:
+      <div className="p-2.5 rounded bg-[#0d0f12] border border-[#1f242e] text-xs text-slate-300 leading-relaxed font-sans">
+        <span className="font-mono font-bold text-blue-400 mr-2 text-[10px] uppercase tracking-wider">
+          SYNTHESIS:
         </span>
         {score.explanation}
       </div>

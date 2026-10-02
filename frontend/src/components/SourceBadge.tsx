@@ -8,26 +8,26 @@ export const SourceBadge: React.FC<Props> = ({ source }) => {
   const getBadge = () => {
     switch (source.toLowerCase()) {
       case 'cloudtrail':
-        return 'bg-blue-950/80 text-blue-300 border-blue-500/40';
+        return 'bg-blue-950/40 text-blue-400 border-blue-800/60';
       case 'cloudwatch':
-        return 'bg-purple-950/80 text-purple-300 border-purple-500/40';
+        return 'bg-cyan-950/40 text-cyan-400 border-cyan-800/60';
       case 'hindsight':
-        return 'bg-amber-950/80 text-amber-300 border-amber-500/40';
+        return 'bg-amber-950/40 text-amber-400 border-amber-800/60';
       case 'agent':
-        return 'bg-cyan-950/80 text-cyan-300 border-cyan-500/40';
+        return 'bg-slate-800 text-slate-300 border-slate-700';
       case 'governance':
       case 'approval':
-        return 'bg-yellow-950/80 text-yellow-300 border-yellow-500/40';
+        return 'bg-emerald-950/40 text-emerald-400 border-emerald-800/60';
       case 'dependency':
-        return 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40';
-      default:
         return 'bg-slate-800 text-slate-300 border-slate-700';
+      default:
+        return 'bg-slate-800/60 text-slate-400 border-slate-700/60';
     }
   };
 
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono uppercase font-medium border ${getBadge()}`}
+      className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono uppercase font-semibold border ${getBadge()}`}
     >
       {source}
     </span>
