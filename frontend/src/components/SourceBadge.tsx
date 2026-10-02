@@ -8,20 +8,20 @@ export const SourceBadge: React.FC<Props> = ({ source }) => {
   const getBadge = () => {
     switch (source.toLowerCase()) {
       case 'cloudtrail':
-        return 'bg-[#0066FF]/15 text-[#0066FF] border-[#0066FF]/30';
+        return 'bg-[rgba(88,166,255,0.15)] text-[#58A6FF] border-[rgba(88,166,255,0.3)]';
       case 'cloudwatch':
-        return 'bg-[#00FF88]/15 text-[#00FF88] border-[#00FF88]/30';
+        return 'bg-[rgba(63,185,80,0.15)] text-[#3FB950] border-[rgba(63,185,80,0.3)]';
       case 'hindsight':
-        return 'bg-[#FFB800]/15 text-[#FFB800] border-[#FFB800]/30';
+        return 'bg-[rgba(210,153,34,0.15)] text-[#D29922] border-[rgba(210,153,34,0.3)]';
       case 'agent':
-        return 'bg-[#A0A0A0]/15 text-[#A0A0A0] border-[#A0A0A0]/30';
+        return 'bg-[#232327] text-[#A1A1AA] border-[#2A2A2F]';
       case 'governance':
       case 'approval':
-        return 'bg-[#00FF88]/15 text-[#00FF88] border-[#00FF88]/30';
+        return 'bg-[rgba(63,185,80,0.15)] text-[#3FB950] border-[rgba(63,185,80,0.3)]';
       case 'dependency':
-        return 'bg-[#0066FF]/15 text-[#0066FF] border-[#0066FF]/30';
+        return 'bg-[rgba(88,166,255,0.15)] text-[#58A6FF] border-[rgba(88,166,255,0.3)]';
       default:
-        return 'bg-[#2a2a2a] text-[#A0A0A0] border-[#333333]';
+        return 'bg-[#232327] text-[#A1A1AA] border-[#2A2A2F]';
     }
   };
 

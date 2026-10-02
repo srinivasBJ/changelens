@@ -9,13 +9,13 @@ export const ConfidenceBadge: React.FC<Props> = ({ confidence = 'insufficient' }
   const getStyles = () => {
     switch (confidence.toLowerCase()) {
       case 'high':
-        return 'bg-[#00FF88]/15 text-[#00FF88] border-[#00FF88]/30';
+        return 'bg-[rgba(63,185,80,0.15)] text-[#3FB950] border-[rgba(63,185,80,0.3)]';
       case 'medium':
-        return 'bg-[#FFB800]/15 text-[#FFB800] border-[#FFB800]/30';
+        return 'bg-[rgba(210,153,34,0.15)] text-[#D29922] border-[rgba(210,153,34,0.3)]';
       case 'low':
-        return 'bg-[#FF3366]/15 text-[#FF3366] border-[#FF3366]/30';
+        return 'bg-[rgba(248,81,73,0.15)] text-[#F85149] border-[rgba(248,81,73,0.3)]';
       default:
-        return 'bg-[#FF3366]/15 text-[#FF3366] border-[#FF3366]/30';
+        return 'bg-[rgba(248,81,73,0.15)] text-[#F85149] border-[rgba(248,81,73,0.3)]';
     }
   };
 

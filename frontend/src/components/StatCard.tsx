@@ -18,24 +18,24 @@ export const StatCard: React.FC<Props> = ({
 }) => {
   return (
     <div
-      className={`p-[20px] rounded-[10px] border transition-colors bg-[#1f1f1f] ${
+      className={`min-h-[96px] p-4 rounded-[10px] border transition-colors flex flex-col justify-between ${
         highlight
-          ? 'border-[#0066FF]/60 bg-[#1a2b42]'
-          : 'border-[#3a3a3a] hover:border-[#4a4a4a]'
+          ? 'border-[#2F6FAD] bg-[#17171A]'
+          : 'border-[#2A2A2F] bg-[#17171A] hover:border-[#3F3F46]'
       }`}
     >
       <div className="flex items-center justify-between">
-        <span className="text-[11px] uppercase font-sans font-semibold tracking-[0.08em] text-[#888888]">
+        <span className="text-[11px] uppercase font-sans font-semibold tracking-[0.06em] text-[#71717A]">
           {label}
         </span>
-        <Icon className="w-4 h-4 text-[#0066FF]/60" />
+        <Icon className="w-4 h-4 text-[#58A6FF]/70" />
       </div>
-      <div className="mt-3 flex items-baseline gap-2">
-        <span className="text-[32px] font-sans font-bold text-[#FFFFFF] leading-[1.2] tracking-[-0.02em] tabular">
+      <div className="mt-2 flex items-baseline gap-2">
+        <span className="text-[28px] font-sans font-bold text-[#FFFFFF] leading-none tracking-tight tabular">
           {value}
         </span>
         {subtext && (
-          <span className="text-[12px] font-sans font-medium text-[#888888]">
+          <span className="text-[12px] font-sans font-medium text-[#71717A]">
             {subtext}
           </span>
         )}

@@ -9,43 +9,39 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        app: {
-          bg: '#292929',
-          panel: '#1f1f1f',
-          input: '#171717',
-          hover: '#333333',
-          selected: '#1a2b42',
-          border: '#3a3a3a',
-          'border-muted': '#303030',
-          divider: '#3a3a3a',
+        surf: {
+          0: '#0A0A0B',
+          1: '#121214',
+          2: '#17171A',
+          3: '#1E1E22',
+          4: '#232327',
         },
-        pure: {
-          black: '#292929',
-          panel: '#1f1f1f',
-          input: '#171717',
-          hover: '#333333',
-          selected: '#1a2b42',
-          border: '#3a3a3a',
-          'border-muted': '#303030',
-          divider: '#3a3a3a',
+        edge: {
+          card: '#2A2A2F',
+          input: '#3F3F46',
         },
-        accent: {
-          blue: '#0066FF',
-          'blue-hover': '#0052CC',
-          green: '#00FF88',
-          amber: '#FFB800',
-          red: '#FF3366',
+        signal: {
+          blue: '#2F6FAD',
+          hover: '#3579BD',
+          bright: '#58A6FF',
+          tint: 'rgba(88, 166, 255, 0.10)',
         },
         tx: {
-          heading: '#D6D6D6',
-          primary: '#D6D6D6',
-          secondary: '#A8A8A8',
-          muted: '#7A7A7A',
+          primary: '#ECECEC',
+          secondary: '#A1A1AA',
+          muted: '#71717A',
+          onblue: '#D9E6F2',
+        },
+        status: {
+          success: '#3FB950',
+          warn: '#D29922',
+          danger: '#F85149',
         },
       },
       borderRadius: {
         card: '10px',
-        btn: '8px',
+        btn: '6px',
+        pill: '999px',
       },
       fontFamily: {
         sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
@@ -59,7 +55,7 @@ module.exports = {
         body: ['14px', { lineHeight: '1.55', letterSpacing: '0', fontWeight: '400' }],
         'body-sm': ['13px', { lineHeight: '1.5', letterSpacing: '0', fontWeight: '400' }],
         label: ['12px', { lineHeight: '1.4', letterSpacing: '0.01em', fontWeight: '500' }],
-        overline: ['11px', { lineHeight: '1.3', letterSpacing: '0.08em', fontWeight: '600' }],
+        overline: ['11px', { lineHeight: '1.3', letterSpacing: '0.06em', fontWeight: '600' }],
         micro: ['10px', { lineHeight: '1.2', letterSpacing: '0.06em', fontWeight: '600' }],
         'mono-sm': ['12px', { lineHeight: '1.4', letterSpacing: '0' }],
         'mono-md': ['13px', { lineHeight: '1.45', letterSpacing: '0' }],
