@@ -1,0 +1,18 @@
+{
+    "Label": "Throttles",
+    "Namespace": "AWS/Lambda",
+    "FunctionName": "checkout-function",
+    "Period": 60,
+    "Datapoints": [
+        {
+            "Timestamp": "2026-10-02T11:42:00Z",
+            "Sum": 32.0,
+            "Unit": "Count"
+        },
+        {
+            "Timestamp": "2026-10-02T11:39:00Z",
+            "Sum": 0.0,
+            "Unit": "Count"
+        }
+    ]
+}

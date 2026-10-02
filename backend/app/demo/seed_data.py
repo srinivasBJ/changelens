@@ -448,9 +448,11 @@ def _build_timeline():
 
 
 def _build_impact_score():
-    """Build the deterministic demo impact score."""
+    """Build the deterministic demo impact score matching the exact formula weights:
+    0.35*0.91 + 0.25*0.97 + 0.20*1.0 + 0.10*0.70 + 0.10*0.76 = 0.907 -> 0.91
+    """
     return ImpactScore(
-        overall=0.87,
+        overall=0.91,
         metric_severity=0.91,
         temporal_proximity=0.97,
         dependency_weight=1.0,
@@ -458,7 +460,7 @@ def _build_impact_score():
         historical_similarity=0.76,
         confidence=ConfidenceLevel.HIGH,
         explanation=(
-            "Evidence-weighted impact score: 0.87 (high confidence). "
+            "Evidence-weighted impact score: 0.91 (high confidence). "
             "Highest severity anomaly: Throttles on checkout-function (+340% deviation). "
             "2 similar historical incident(s) found, suggesting a high-confidence correlation with known patterns. "
             "The change 'UpdateFunctionConfiguration' on 'checkout-function' is the most likely contributing factor based on available evidence."

@@ -27,11 +27,14 @@ from app.models.core import (
     OperationalMemory,
     TimelineEvent,
 )
+from app.services.correlation import CorrelationEngine
 
-# Verified incident timestamp: 2026-10-02 11:41:31 UTC (17:11:31 IST)
+# Verified incident timestamps from real AWS control plane and telemetry:
+# - CloudTrail PutFunctionConcurrency EventTime: 2026-10-02 11:41:31 UTC (17:11:31 IST)
+# - CloudWatch 1-minute metric timestamp:        2026-10-02 11:42:00 UTC (17:12:00 IST, +29s after change)
 VERIFIED_CHANGE_TIME = datetime(2026, 10, 2, 11, 41, 31, tzinfo=timezone.utc)
-VERIFIED_ANOMALY_TIME = datetime(2026, 10, 2, 11, 40, 0, tzinfo=timezone.utc)
-VERIFIED_API_ANOMALY_TIME = datetime(2026, 10, 2, 11, 40, 30, tzinfo=timezone.utc)
+VERIFIED_ANOMALY_TIME = datetime(2026, 10, 2, 11, 42, 0, tzinfo=timezone.utc)
+VERIFIED_API_ANOMALY_TIME = datetime(2026, 10, 2, 11, 42, 0, tzinfo=timezone.utc)
 
 
 def get_verified_live_change() -> Change:
@@ -267,21 +270,12 @@ def get_verified_live_investigation() -> InvestigationCase:
             )
         )
 
-    impact_score = ImpactScore(
-        overall=0.87,
-        metric_severity=0.91,
-        temporal_proximity=0.97,
-        dependency_weight=1.00,
-        actor_context=0.70,
-        historical_similarity=0.76,
-        confidence=ConfidenceLevel.HIGH,
-        explanation=(
-            "Verified live incident: Evidence-weighted impact score: 0.87 (high confidence). "
-            "Highest severity anomaly: Throttles on checkout-function (+340% deviation). "
-            "2 similar historical incident(s) found, confirming a high-confidence correlation. "
-            "The change 'PutFunctionConcurrency' on 'checkout-function' is the direct causal trigger "
-            "for observed downstream throttling."
-        ),
+    engine = CorrelationEngine()
+    impact_score = engine.calculate_impact_score(
+        change=change,
+        anomalies=anomalies,
+        edges=edges,
+        memories=memories,
     )
 
     return InvestigationCase(

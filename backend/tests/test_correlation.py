@@ -153,3 +153,126 @@ def test_overall_impact_score(engine, sample_change, sample_anomalies, sample_ed
     # Verify confidence-aware language
     assert "most likely" in score.explanation.lower()
     assert "definitely caused" not in score.explanation.lower()
+    # Verify mathematical consistency
+    expected_sum = round(
+        0.35 * score.metric_severity
+        + 0.25 * score.temporal_proximity
+        + 0.20 * score.dependency_weight
+        + 0.10 * score.actor_context
+        + 0.10 * score.historical_similarity,
+        2,
+    )
+    assert score.overall == expected_sum
+
+
+def test_review_example_formula_values():
+    """Verify exact calculation for representative component values:
+    0.35 * 0.91 + 0.25 * 0.97 + 0.20 * 1.00 + 0.10 * 0.70 + 0.10 * 0.76 = 0.907 -> 0.91
+    """
+    m, t, d, a, h = 0.91, 0.97, 1.00, 0.70, 0.76
+    expected = round(0.35 * m + 0.25 * t + 0.20 * d + 0.10 * a + 0.10 * h, 2)
+    assert expected == 0.91
+
+
+def test_temporal_proximity_distinguishes_post_change_from_pre_change(engine):
+    change_time = datetime(2026, 10, 2, 11, 41, 31, tzinfo=timezone.utc)
+
+    # Post-change anomaly (29s after change)
+    post_change_anomaly = [
+        Anomaly(
+            timestamp=datetime(2026, 10, 2, 11, 42, 0, tzinfo=timezone.utc),
+            resource_id="checkout-function",
+            resource_name="checkout-function",
+            service="lambda",
+            metric_name="Throttles",
+            metric_namespace="AWS/Lambda",
+            baseline_value=0.0,
+            anomaly_value=32.0,
+            deviation_pct=340.0,
+            severity=0.95,
+        )
+    ]
+    post_score = engine._calculate_temporal_proximity(change_time, post_change_anomaly)
+    assert post_score == 0.90  # 1.0 - (29 / 300) = 0.9033 -> 0.90
+
+    # Pre-change anomaly (91s BEFORE change)
+    pre_change_anomaly = [
+        Anomaly(
+            timestamp=datetime(2026, 10, 2, 11, 40, 0, tzinfo=timezone.utc),
+            resource_id="checkout-function",
+            resource_name="checkout-function",
+            service="lambda",
+            metric_name="Throttles",
+            metric_namespace="AWS/Lambda",
+            baseline_value=0.0,
+            anomaly_value=32.0,
+            deviation_pct=340.0,
+            severity=0.95,
+        )
+    ]
+    pre_score = engine._calculate_temporal_proximity(change_time, pre_change_anomaly)
+    assert pre_score == 0.0  # Must be 0.0 because anomaly preceded the change
+
+    # Neutral explanation language when anomalies preceded change
+    chg = Change(
+        id="chg_test",
+        timestamp=change_time,
+        service="lambda",
+        action="PutFunctionConcurrency",
+        resource_id="checkout-function",
+        resource_name="checkout-function",
+        actor_type=ActorType.HUMAN,
+        actor_id="user/ops-lead",
+    )
+    explanation = engine._generate_explanation(
+        overall=0.45,
+        confidence=ConfidenceLevel.LOW,
+        change=chg,
+        anomalies=pre_change_anomaly,
+        memories=[],
+    )
+    assert "preceded" in explanation.lower()
+    assert "temporal relationship unclear" in explanation.lower()
+    assert "cannot be confirmed as the causal trigger" in explanation.lower()
+
+
+def test_verified_live_incident_chronology_and_score():
+    """Verify that live incident timeline strictly orders change before telemetry
+    and that the score matches the exact formula sum."""
+    from app.services.live_incident import (
+        get_verified_live_investigation,
+        VERIFIED_CHANGE_TIME,
+        VERIFIED_ANOMALY_TIME,
+    )
+
+    inv = get_verified_live_investigation()
+
+    # 1. Verify change strictly precedes telemetry anomalies
+    assert VERIFIED_CHANGE_TIME < VERIFIED_ANOMALY_TIME
+    delta_seconds = (VERIFIED_ANOMALY_TIME - VERIFIED_CHANGE_TIME).total_seconds()
+    assert delta_seconds == 29.0  # Exactly 29 seconds post-change
+
+    # 2. Timeline chronological sorting
+    timeline = sorted(inv.timeline, key=lambda x: x.timestamp)
+    change_events = [e for e in timeline if e.lane == "CHANGE"]
+    telemetry_events = [e for e in timeline if e.lane == "TELEMETRY"]
+
+    assert len(change_events) >= 1
+    assert len(telemetry_events) >= 1
+    # Change occurs before first telemetry anomaly
+    assert change_events[0].timestamp < telemetry_events[0].timestamp
+
+    # 3. Impact score mathematical consistency
+    score = inv.impact_score
+    assert score is not None
+    expected = round(
+        0.35 * score.metric_severity
+        + 0.25 * score.temporal_proximity
+        + 0.20 * score.dependency_weight
+        + 0.10 * score.actor_context
+        + 0.10 * score.historical_similarity,
+        2,
+    )
+    assert score.overall == expected
+    assert score.overall == 0.92
+

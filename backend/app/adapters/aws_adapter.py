@@ -291,7 +291,7 @@ class AWSAdapter:
             anomalies = []
             for metric_name, namespace, stat in metrics_to_check:
                 try:
-                    # Get recent period with Period=300 (standard CloudWatch resolution)
+                    # Get recent period with Period=60 (1-minute fine CloudWatch resolution)
                     recent = self.cloudwatch.get_metric_statistics(
                         Namespace=namespace,
                         MetricName=metric_name,
@@ -300,7 +300,7 @@ class AWSAdapter:
                         ],
                         StartTime=start_time,
                         EndTime=end_time,
-                        Period=300,
+                        Period=60,
                         Statistics=[stat],
                     )
 
@@ -312,7 +312,7 @@ class AWSAdapter:
                         ],
                         StartTime=baseline_start,
                         EndTime=start_time,
-                        Period=300,
+                        Period=60,
                         Statistics=[stat],
                     )
 
@@ -426,7 +426,7 @@ class AWSAdapter:
                                 Dimensions=[{"Name": dim_name, "Value": target_id}],
                                 StartTime=start_time,
                                 EndTime=end_time,
-                                Period=300,
+                                Period=60,
                                 Statistics=[stat],
                             )
 
@@ -442,7 +442,7 @@ class AWSAdapter:
                                 Dimensions=[{"Name": dim_name, "Value": target_id}],
                                 StartTime=baseline_start,
                                 EndTime=start_time,
-                                Period=300,
+                                Period=60,
                                 Statistics=[stat],
                             )
                             baseline_points = baseline.get("Datapoints", [])

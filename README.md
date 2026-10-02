@@ -176,7 +176,7 @@ ChangeLens was validated against a live production AWS workload in `us-east-2`:
    - Ingested the live CloudTrail event in real time.
    - Correlated the temporal proximity of the change with the CloudWatch telemetry anomalies.
    - Traced the topological blast radius: `checkout-function` ➔ `changelens-checkout-api` ➔ `POST /checkout`.
-   - Calculated an explainable impact score of **0.87 (High Confidence)**.
+   - Calculated an explainable impact score of **0.92 (High Confidence)**.
    - Created the live investigation case (`inv_live_001`).
 
 > [!NOTE]

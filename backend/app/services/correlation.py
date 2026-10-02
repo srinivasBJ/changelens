@@ -121,21 +121,29 @@ class CorrelationEngine:
     ) -> float:
         """Score based on how quickly anomalies appeared after the change.
 
-        Higher score = anomalies appeared sooner after the change.
+        Strictly distinguishes post-change anomalies from pre-change anomalies:
+        - If an anomaly timestamp is at or after the change: score based on proximity (0.0 to 1.0)
+        - If an anomaly timestamp preceded the change: does NOT count toward causal temporal proximity
+        - If ALL anomalies preceded the change: returns 0.0
         """
         if not anomalies:
             return 0.0
 
-        min_delta = float("inf")
+        # Filter anomalies that occurred at or after the change
+        # (allow 5-second clock skew tolerance for near-simultaneous recording)
+        post_change_deltas = []
         for anomaly in anomalies:
-            delta = abs(
-                (anomaly.timestamp - change_time).total_seconds()
-            )
-            min_delta = min(min_delta, delta)
+            delta = (anomaly.timestamp - change_time).total_seconds()
+            if delta >= -5:
+                effective_delta = max(0.0, delta)
+                if effective_delta < self.MAX_TEMPORAL_WINDOW:
+                    post_change_deltas.append(effective_delta)
 
-        if min_delta >= self.MAX_TEMPORAL_WINDOW:
+        if not post_change_deltas:
+            # All anomalies strictly preceded the change - no temporal causal support
             return 0.0
 
+        min_delta = min(post_change_deltas)
         return round(1.0 - (min_delta / self.MAX_TEMPORAL_WINDOW), 2)
 
     def _calculate_dependency_weight(
@@ -254,10 +262,26 @@ class CorrelationEngine:
                 f"suggesting a high-confidence correlation with known patterns."
             )
 
-        parts.append(
-            f"The change '{change.action}' on '{change.resource_name}' "
-            f"is the most likely contributing factor based on available evidence."
-        )
+        # Causal language calibrated to temporal sequence:
+        post_change = [
+            a for a in anomalies
+            if (a.timestamp - change.timestamp).total_seconds() >= -5
+        ]
+        if not post_change and anomalies:
+            parts.append(
+                f"Observed telemetry anomalies preceded the change timestamp "
+                f"(temporal relationship unclear; change cannot be confirmed as the causal trigger)."
+            )
+        elif overall >= 0.70:
+            parts.append(
+                f"The change '{change.action}' on '{change.resource_name}' "
+                f"is the most likely contributing factor based on available evidence."
+            )
+        else:
+            parts.append(
+                f"The change '{change.action}' on '{change.resource_name}' "
+                f"correlates with moderate confidence, but causal linkage requires further evidence."
+            )
 
         return " ".join(parts)
 

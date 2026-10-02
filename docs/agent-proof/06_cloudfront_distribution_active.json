@@ -1,0 +1,9 @@
+{
+    "Id": "E3GFWCEFHGYGOA",
+    "DomainName": "djagjxqmso1ct.cloudfront.net",
+    "Status": "Deployed",
+    "Enabled": true,
+    "HttpVersion": "http2",
+    "Comment": "ChangeLens Production CDN Distribution",
+    "PriceClass": "PriceClass_100"
+}

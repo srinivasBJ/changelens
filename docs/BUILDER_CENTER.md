@@ -76,7 +76,7 @@ ChangeLens was designed and implemented end-to-end by **Google Antigravity**, an
 9. **ChangeLens Detection:** ChangeLens correlates the change with the telemetry spike.
 10. **Blast Radius Mapping:** Graph shows `checkout-function` → `checkout-api` → `POST /checkout` → `OrdersCreated`.
 11. **Hindsight Operational Memory Match:** ChangeLens recalls 2 similar historical incidents from the `changelens-operational-memory` bank (similarity score: 81%).
-12. **Evidence-Weighted Hypothesis:** ChangeLens presents an impact score of `0.87 (HIGH Confidence)` with a confidence-aware explanation.
+12. **Evidence-Weighted Hypothesis:** ChangeLens presents an impact score of `0.92 (HIGH Confidence)` with a confidence-aware explanation.
 13. **Evidence Pack Generation:** Operator exports an auditable Evidence Pack with SHA-256 checksums and recommended investigation runbooks.
 
 ---

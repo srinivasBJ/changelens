@@ -246,7 +246,7 @@ export default function InvestigationDetailPage() {
               Causal Inference
             </span>
             <p className="text-[#A1A1AA] text-[11px] leading-[1.4]">
-              Score: {inv.impact_score?.overall.toFixed(2) || '0.87'} ({inv.impact_score?.confidence.toUpperCase() || 'HIGH'} confidence)
+              Score: {inv.impact_score?.overall.toFixed(2) || '0.92'} ({inv.impact_score?.confidence.toUpperCase() || 'HIGH'} confidence)
             </p>
           </div>
         </div>

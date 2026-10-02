@@ -238,8 +238,10 @@ class InvestigationService:
             else:
                 op_state = "RESOLVED"
                 status = "resolved"
+                score_val = base_inv.impact_score.overall if base_inv.impact_score else 0.92
+                score_conf = base_inv.impact_score.confidence.value if base_inv.impact_score else "high"
                 hypothesis = (
-                    "Verified live incident: Evidence-weighted impact score: 0.87 (high confidence). "
+                    f"Verified live incident: Evidence-weighted impact score: {score_val:.2f} ({score_conf} confidence). "
                     "Peak throttling (+340%) and invocation errors (+180%) observed on checkout-function following PutFunctionConcurrency. "
                     f"Current AWS telemetry window is quiet (operational state: RESOLVED as of {now.strftime('%H:%M:%S UTC')})."
                 )

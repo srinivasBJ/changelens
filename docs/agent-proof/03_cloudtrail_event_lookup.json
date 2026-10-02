@@ -1,0 +1,15 @@
+[
+    {
+        "EventId": "f0df88b4-6519-4884-ab0a-d88ffc5b6f94",
+        "EventName": "PutFunctionConcurrency20171031",
+        "EventTime": "2026-10-02T11:41:31Z",
+        "Username": "fproducion-aws",
+        "AwsRegion": "us-east-2",
+        "Resources": [
+            {
+                "ResourceType": "AWS::Lambda::Function",
+                "ResourceName": "checkout-function"
+            }
+        ]
+    }
+]
