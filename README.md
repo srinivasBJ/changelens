@@ -18,7 +18,7 @@
 
 ---
 
-## 🔬 Judge & Reviewer Verification Commands
+## 🔬 Verification Commands
 
 Reviewers can verify ChangeLens endpoints, evidence integrity, and cryptographic hashes directly from their terminal using simple `curl` commands against the live production deployment:
 
