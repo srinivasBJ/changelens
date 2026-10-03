@@ -52,3 +52,22 @@ def test_evidence_pack_hash_determinism():
     )
     hash2 = pack2.compute_content_hash()
     assert hash1 == hash2
+
+
+@pytest.mark.asyncio
+async def test_live_evidence_pack_clean_topology_and_deduplication():
+    service = InvestigationService()
+    pack = await service.generate_evidence_pack("inv_live_001")
+    assert pack is not None
+    assert pack.investigation_id == "inv_live_001"
+    # Deduplication and topology integrity
+    assert pack.affected_resources == ["checkout-function", "changelens-checkout-api", "checkout-table"]
+    assert pack.dependency_path == ["checkout-function", "changelens-checkout-api", "checkout-table"]
+    # Ensure no change IDs or duplicates leak into resources or paths
+    for res in pack.affected_resources:
+        assert not res.startswith("chg_")
+    for step in pack.dependency_path:
+        assert not step.startswith("chg_")
+    assert len(pack.affected_resources) == len(set(pack.affected_resources))
+    assert len(pack.dependency_path) == len(set(pack.dependency_path))
+

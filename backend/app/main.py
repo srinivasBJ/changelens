@@ -8,11 +8,27 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import Response
+
 from app.api.routes import router
 from app.config import settings
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("changelens")
+
+
+class CacheControlMiddleware(BaseHTTPMiddleware):
+    """Enforce strict anti-caching headers on dynamic API and health endpoints."""
+
+    async def dispatch(self, request: Request, call_next):
+        response: Response = await call_next(request)
+        if request.url.path.startswith("/api") or request.url.path == "/health":
+            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+        return response
 
 
 @asynccontextmanager
@@ -31,6 +47,9 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Enforce no-cache on dynamic endpoints
+app.add_middleware(CacheControlMiddleware)
+
 # Enable CORS for Next.js frontend and external clients
 app.add_middleware(
     CORSMiddleware,
@@ -42,3 +61,4 @@ app.add_middleware(
 
 # Include primary routes
 app.include_router(router)
+

@@ -191,3 +191,17 @@ def test_protected_mutating_endpoints_auth():
 
     finally:
         settings.changelens_api_key = original_key
+
+
+def test_cache_control_headers():
+    """Verify strict anti-caching headers on dynamic API and health endpoints."""
+    res_health = client.get("/health")
+    assert res_health.status_code == 200
+    assert "no-store" in res_health.headers.get("Cache-Control", "")
+    assert res_health.headers.get("Pragma") == "no-cache"
+
+    res_api = client.get("/api/investigations")
+    assert res_api.status_code == 200
+    assert "no-store" in res_api.headers.get("Cache-Control", "")
+    assert res_api.headers.get("Pragma") == "no-cache"
+

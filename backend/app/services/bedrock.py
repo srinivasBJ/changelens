@@ -26,6 +26,8 @@ from app.models.core import (
     InvestigationCase,
     InvestigationNarrative,
     NarrativeResult,
+    extract_affected_resources,
+    extract_dependency_path,
 )
 
 logger = logging.getLogger(__name__)
@@ -186,12 +188,9 @@ class BedrockService:
                 }
                 for m in evidence.historical_memories
             ]
-            affected = [a.resource_name for a in evidence.anomalies]
-            if change_data.get("resource_name") and change_data["resource_name"] not in affected:
-                affected.insert(0, change_data["resource_name"])
-            for edge in evidence.impact_edges:
-                if edge.target not in affected:
-                    affected.append(edge.target)
+            root_res = change_data.get("resource_name")
+            affected = extract_affected_resources(root_res, evidence.anomalies, evidence.impact_edges)
+            dep_path = extract_dependency_path(root_res, evidence.impact_edges)
 
             return {
                 "investigation_id": evidence.id,
@@ -201,7 +200,7 @@ class BedrockService:
                 "actor": change_data.get("actor_id"),
                 "approval_state": evidence.approvals[0].status.value if evidence.approvals else "not_required",
                 "affected_resources": affected,
-                "dependency_path": [e.source for e in evidence.impact_edges] + ([evidence.impact_edges[-1].target] if evidence.impact_edges else []),
+                "dependency_path": dep_path,
                 "anomalies": anomalies,
                 "impact_score": score_data,
                 "historical_matches": historical,

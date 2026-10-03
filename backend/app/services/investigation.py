@@ -43,6 +43,8 @@ from app.models.core import (
     NarrativeResult,
     OperationalMemory,
     TimelineEvent,
+    extract_affected_resources,
+    extract_dependency_path,
 )
 from app.services.bedrock import BedrockService
 from app.services.correlation import CorrelationEngine
@@ -474,6 +476,10 @@ class InvestigationService:
                 display_name=most_likely_change.actor_id.split("/")[-1] if "/" in most_likely_change.actor_id else most_likely_change.actor_id,
             )
 
+        root_res = most_likely_change.resource_name if most_likely_change else None
+        clean_affected = extract_affected_resources(root_res, inv.anomalies, inv.impact_edges)
+        clean_path = extract_dependency_path(root_res, inv.impact_edges)
+
         # Build pack
         pack = EvidencePack(
             investigation_id=inv.id,
@@ -488,8 +494,8 @@ class InvestigationService:
             most_likely_change=most_likely_change,
             actor=actor,
             approval_state=inv.approvals[0].status if inv.approvals else ApprovalStatus.NOT_REQUIRED,
-            affected_resources=[a.resource_name for a in inv.anomalies] or [most_likely_change.resource_name] if most_likely_change else [],
-            dependency_path=[e.source for e in inv.impact_edges] + [inv.impact_edges[-1].target] if inv.impact_edges else [],
+            affected_resources=clean_affected,
+            dependency_path=clean_path,
             anomalies=inv.anomalies,
             agent_actions=inv.agent_actions,
             historical_matches=inv.historical_memories,

@@ -1,7 +1,7 @@
 # ChangeLens — AWS Change Impact & Operational Memory
 
 [![Live Deployment](https://img.shields.io/badge/AWS%20CloudFront-Live%20HTTPS-58A6FF?logo=amazon-aws&logoColor=white)](https://djagjxqmso1ct.cloudfront.net)
-[![Tests](https://img.shields.io/badge/Tests-28%20Passed-3FB950)](backend/tests)
+[![Tests](https://img.shields.io/badge/Tests-30%20Passed-3FB950)](backend/tests)
 [![License: MIT](https://img.shields.io/badge/License-MIT-A1A1AA.svg)](LICENSE)
 
 
@@ -15,6 +15,43 @@
 - **Interactive API Documentation:** [https://djagjxqmso1ct.cloudfront.net/docs](https://djagjxqmso1ct.cloudfront.net/docs)
 - **Health & Telemetry Status:** [https://djagjxqmso1ct.cloudfront.net/health](https://djagjxqmso1ct.cloudfront.net/health)
 - **GitHub Repository:** [https://github.com/srinivasBJ/changelens](https://github.com/srinivasBJ/changelens)
+
+---
+
+## 🔬 Judge & Reviewer Verification Commands
+
+Reviewers can verify ChangeLens endpoints, evidence integrity, and cryptographic hashes directly from their terminal using simple `curl` commands against the live production deployment:
+
+### 1. Verify Health & Operational State
+```bash
+curl -s https://djagjxqmso1ct.cloudfront.net/health | jq .
+```
+*Expected: `status: "healthy"`, `mode: "live"`, `aws_region: "us-east-2"`, `bedrock_status: "BEDROCK_AVAILABLE"`.*
+
+### 2. Verify Primary Live Investigation (`inv_live_001`)
+```bash
+curl -s https://djagjxqmso1ct.cloudfront.net/api/investigations/inv_live_001 | jq '{id, title, impact_score: .impact_score.overall, confidence: .impact_score.confidence, change: .changes[0].action, change_time: .changes[0].timestamp, anomaly_time: .anomalies[0].timestamp}'
+```
+*Expected: `impact_score: 0.92`, `confidence: "high"`, change `PutFunctionConcurrency` @ `11:41:31Z`, anomaly `Throttles` @ `11:42:00Z` (+29s post-change).*
+
+### 3. Verify Tamper-Evident Evidence Pack & Cryptographic SHA-256 Hash
+```bash
+curl -s https://djagjxqmso1ct.cloudfront.net/api/investigations/inv_live_001/evidence-pack | jq '{id, hash: .content_hash, affected_resources, dependency_path}'
+```
+*Expected: SHA-256 hash computed deterministically, clean dependency path across checkout topology without duplicates or event IDs.*
+
+### 4. Verify Amazon Bedrock AI Narrative (Generated via `amazon.nova-lite-v1:0` in `us-east-2`)
+```bash
+curl -s https://djagjxqmso1ct.cloudfront.net/api/investigations/inv_live_001/narrative | jq '{provider: .ai_narrative_provider, model: .bedrock_model_id, status: .bedrock_status, latency_ms}'
+```
+*Expected: `ai_narrative_provider: "bedrock"`, `bedrock_model_id: "amazon.nova-lite-v1:0"`, `bedrock_status: "BEDROCK_AVAILABLE"`.*
+
+### 5. Verify Mutation Protection (403 Forbidden without API Key)
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" -X POST https://djagjxqmso1ct.cloudfront.net/api/demo/inject-change
+```
+*Expected: `403` (Forbidden — mutating actions require authenticated `X-ChangeLens-Key`).*
+
 
 ---
 
@@ -131,7 +168,7 @@ Yet when an incident strikes, **operators must mentally assemble the puzzle acro
    │  AWS Lambda             ── Workload Serverless Compute     │
    │  Amazon API Gateway     ── REST Ingress & Route Mapping    │
    │  Amazon DynamoDB        ── Persistent State & Backups      │
-   │  Amazon S3              ── Evidence Packs & Storage        │
+   │  Amazon S3              ── Deployment Artifacts & Export Schemas │
    └──────────────────────────────────────────────────────────┘
 ```
 
@@ -179,7 +216,7 @@ ChangeLens was validated against a live production AWS workload in `us-east-2`:
    - Lambda execution errors increased **+180%** as function invocations were rejected.
    - Downstream API Gateway `5XXError` metrics rose **+27%**.
    - CloudWatch captured the concurrent deviation from baseline.
-5. **CloudTrail Capture:** AWS CloudTrail recorded the `PutFunctionConcurrency` management API call, capturing the IAM user ARN, source IP, timestamp, and updated parameter.
+5. **CloudTrail Capture & Actor Attribution:** AWS CloudTrail recorded the `PutFunctionConcurrency` management API call (`f0df88b4-6519-4884-ab0a-d88ffc5b6f94`) under IAM user principal `arn:aws:iam::979244568165:user/fproducion-aws`, through which the AI coding agent was authenticated and authorized to operate. ChangeLens accurately reflects this identity directly from the raw CloudTrail receipt (`IAMUser`).
 6. **ChangeLens Synthesis:**
    - Ingested the live CloudTrail event in real time.
    - Correlated the temporal proximity of the change with the CloudWatch telemetry anomalies.
@@ -229,7 +266,7 @@ The ChangeLens user interface is built on **SPEC v2: Pure Black (`#0A0A0B`) + Si
 ChangeLens incorporates [Hindsight](https://github.com/vectorize-io/hindsight) to bridge the gap between past incident resolutions and current operational triage:
 - **Incident Pattern Matching:** Recalls similar historical incidents when recurring change-telemetry signatures appear, helping operators identify known failure modes.
 - **Postmortem Retention:** Stores verified incident postmortems, root causes, and runbook resolutions in a dedicated operational memory bank (`changelens-operational-memory`).
-- **Flexible Memory Provider:** Integrates with Hindsight's client SDK with automatic fallback to a local operational memory store for standalone environments.
+- **Flexible Memory Provider Architecture:** Integrates with Hindsight's client SDK (`HindsightAdapter`) with automatic fallback to a deterministic local operational memory store (`FallbackMemoryProvider`) for standalone and offline environments.
 
 ---
 
@@ -248,7 +285,7 @@ ChangeLens is architected specifically for the AWS ecosystem using only native, 
 | **AWS Lambda** | Target serverless compute workload (`checkout-function`) subject to live concurrency throttling. |
 | **Amazon API Gateway** | Public REST API (`changelens-checkout-api`) exposing the `/checkout` route. |
 | **Amazon DynamoDB** | Managed NoSQL database (`checkout-table`) persisting order transaction records. |
-| **Amazon S3** | Object storage for deployment bundles and exported tamper-evident Evidence Packs. |
+| **Amazon S3** | Object storage for deployment bundles and Evidence Pack export key references (read/export schema). |
 
 ---
 

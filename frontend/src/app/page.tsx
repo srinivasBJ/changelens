@@ -10,11 +10,10 @@ import {
   CheckCircle2,
   Cpu,
   Layers,
-  Play,
   RotateCw,
   Zap,
 } from 'lucide-react';
-import { getChanges, getInvestigations, getStats, injectDemoChange } from '@/lib/api';
+import { getChanges, getInvestigations, getStats } from '@/lib/api';
 import { Change, DashboardStats, InvestigationCase } from '@/lib/types';
 import { StatCard } from '@/components/StatCard';
 import { ConfidenceBadge } from '@/components/ConfidenceBadge';
@@ -26,7 +25,6 @@ export default function Dashboard() {
   const [investigations, setInvestigations] = useState<InvestigationCase[]>([]);
   const [changes, setChanges] = useState<Change[]>([]);
   const [loading, setLoading] = useState(true);
-  const [injecting, setInjecting] = useState(false);
   const [selectedInvId, setSelectedInvId] = useState<string>('inv_live_001');
   const [hoveredInvId, setHoveredInvId] = useState<string | null>(null);
 
@@ -72,18 +70,6 @@ export default function Dashboard() {
     loadData();
   }, []);
 
-  const handleInjectDemo = async () => {
-    try {
-      setInjecting(true);
-      await injectDemoChange();
-      await loadData();
-    } catch (e) {
-      console.error('Failed to inject demo change:', e);
-    } finally {
-      setInjecting(false);
-    }
-  };
-
   const selectedInvestigation =
     investigations.find((i) => i.id === selectedInvId) || investigations[0];
 
@@ -115,21 +101,13 @@ export default function Dashboard() {
 
         <div className="flex items-center gap-3 self-stretch sm:self-auto">
           <button
-            onClick={handleInjectDemo}
-            disabled={injecting}
-            className="h-[40px] px-4 rounded-[6px] bg-[#2F6FAD] hover:bg-[#3579BD] text-[#FFFFFF] font-sans text-[13px] font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#58A6FF]"
-          >
-            <Play className="w-4 h-4 fill-current" />
-            <span>{injecting ? 'Injecting...' : 'Inject Demo Scenario'}</span>
-          </button>
-          <button
             onClick={loadData}
             disabled={loading}
             className="h-[40px] px-3.5 rounded-[6px] border border-[#3F3F46] bg-[#17171A] hover:bg-[#232327] text-[#ECECEC] font-sans text-[13px] font-medium flex items-center gap-2 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#58A6FF]"
             title="Refresh Telemetry"
           >
             <RotateCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            <span>Sync</span>
+            <span>Sync Telemetry</span>
           </button>
         </div>
       </div>

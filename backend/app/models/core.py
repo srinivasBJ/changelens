@@ -341,3 +341,67 @@ class EvidencePack(BaseModel):
         content = self.model_dump_json(exclude={"content_hash", "s3_key"})
         self.content_hash = f"sha256:{hashlib.sha256(content.encode()).hexdigest()}"
         return self.content_hash
+
+
+def extract_affected_resources(
+    root_resource: Optional[str] = None,
+    anomalies: Optional[List[Any]] = None,
+    edges: Optional[List[Any]] = None,
+) -> List[str]:
+    """Return deduplicated list of AWS resource names involved in an incident.
+
+    Excludes change event identifiers (e.g. starting with 'chg_') and preserves order.
+    """
+    seen = set()
+    result = []
+
+    def add(name: Optional[str]):
+        if not name or name.startswith("chg_") or name in seen:
+            return
+        seen.add(name)
+        result.append(name)
+
+    add(root_resource)
+    if anomalies:
+        for a in anomalies:
+            add(getattr(a, "resource_name", None))
+    if edges:
+        for e in edges:
+            add(getattr(e, "source", None))
+            add(getattr(e, "target", None))
+    return result
+
+
+def extract_dependency_path(
+    root_resource: Optional[str] = None,
+    edges: Optional[List[Any]] = None,
+) -> List[str]:
+    """Return clean resource-to-resource dependency path, excluding change events and duplicates."""
+    if not edges:
+        return [root_resource] if root_resource and not root_resource.startswith("chg_") else []
+
+    resource_edges = [
+        e for e in edges
+        if not getattr(e, "source", "").startswith("chg_") and not getattr(e, "target", "").startswith("chg_")
+    ]
+    if not resource_edges:
+        return [root_resource] if root_resource and not root_resource.startswith("chg_") else []
+
+    path = []
+    seen = set()
+    if root_resource and not root_resource.startswith("chg_"):
+        path.append(root_resource)
+        seen.add(root_resource)
+
+    for e in resource_edges:
+        src = getattr(e, "source", "")
+        tgt = getattr(e, "target", "")
+        if src and src not in seen:
+            seen.add(src)
+            path.append(src)
+        if tgt and tgt not in seen:
+            seen.add(tgt)
+            path.append(tgt)
+
+    return path
+
