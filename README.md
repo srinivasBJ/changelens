@@ -42,9 +42,9 @@ curl -s https://djagjxqmso1ct.cloudfront.net/api/investigations/inv_live_001/evi
 
 ### 4. Verify Amazon Bedrock AI Narrative (Generated via `amazon.nova-lite-v1:0` in `us-east-2`)
 ```bash
-curl -s https://djagjxqmso1ct.cloudfront.net/api/investigations/inv_live_001/narrative | jq '{provider: .ai_narrative_provider, model: .bedrock_model_id, status: .bedrock_status, latency_ms}'
+curl -s https://djagjxqmso1ct.cloudfront.net/api/investigations/inv_live_001/narrative | jq '{provider: .ai_narrative_provider, model: .model_id, status: .status, latency_ms}'
 ```
-*Expected: `ai_narrative_provider: "bedrock"`, `bedrock_model_id: "amazon.nova-lite-v1:0"`, `bedrock_status: "BEDROCK_AVAILABLE"`.*
+*Expected: `provider: "bedrock"`, `model: "amazon.nova-lite-v1:0"`, `status: "BEDROCK_AVAILABLE"`.*
 
 ### 5. Verify Mutation Protection (403 Forbidden without API Key)
 ```bash
