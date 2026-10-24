@@ -1,3 +1,5 @@
+# ChangeLens Git Ignore - v1.2.0 (Updated: October 24, 2026)
+
 # Environment
 .env
 .env.local

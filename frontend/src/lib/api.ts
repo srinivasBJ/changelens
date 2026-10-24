@@ -7,6 +7,7 @@ import {
   InvestigationCase,
   NarrativeResult,
   OperationalMemory,
+  RemediationPlan,
   TimelineEvent,
 } from './types';
 
@@ -93,4 +94,8 @@ export async function injectDemoChange(): Promise<InvestigationCase> {
   return fetchJson<InvestigationCase>('/api/demo/inject-change', {
     method: 'POST',
   });
+}
+
+export async function getRemediation(id: string): Promise<RemediationPlan> {
+  return fetchJson<RemediationPlan>(`/api/investigations/${id}/remediation`);
 }

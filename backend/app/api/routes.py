@@ -20,6 +20,7 @@ from app.models.core import (
     InvestigationCase,
     NarrativeResult,
     OperationalMemory,
+    RemediationPlan,
     TimelineEvent,
 )
 from app.services.investigation import InvestigationService
@@ -225,6 +226,25 @@ async def create_evidence_pack(
             detail=f"Investigation '{investigation_id}' not found",
         )
     return pack
+
+
+@router.get(
+    "/api/investigations/{investigation_id}/remediation",
+    response_model=RemediationPlan,
+    tags=["Investigations"],
+)
+async def get_investigation_remediation(
+    investigation_id: str,
+    service: InvestigationService = Depends(get_investigation_service),
+):
+    """Retrieve actionable remediation plan and AWS CLI rollback procedures."""
+    plan = await service.get_remediation(investigation_id)
+    if not plan:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Investigation '{investigation_id}' not found",
+        )
+    return plan
 
 
 @router.post("/api/events/agent-action", response_model=AgentAction, tags=["Events"])

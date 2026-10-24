@@ -1,7 +1,8 @@
 # ChangeLens — AWS Change Impact & Operational Memory
 
 [![Live Deployment](https://img.shields.io/badge/AWS%20CloudFront-Live%20HTTPS-58A6FF?logo=amazon-aws&logoColor=white)](https://djagjxqmso1ct.cloudfront.net)
-[![Tests](https://img.shields.io/badge/Tests-30%20Passed-3FB950)](backend/tests)
+[![Version](https://img.shields.io/badge/Version-v1.2.0%20(Oct%202026)-blue)](docs/REMEDIATION_ENGINE.md)
+[![Tests](https://img.shields.io/badge/Tests-33%20Passed-3FB950)](backend/tests)
 [![License: MIT](https://img.shields.io/badge/License-MIT-A1A1AA.svg)](LICENSE)
 
 
@@ -51,6 +52,12 @@ curl -s https://djagjxqmso1ct.cloudfront.net/api/investigations/inv_live_001/nar
 curl -s -o /dev/null -w "%{http_code}\n" -X POST https://djagjxqmso1ct.cloudfront.net/api/demo/inject-change
 ```
 *Expected: `403` (Forbidden — mutating actions require authenticated `X-ChangeLens-Key`).*
+
+### 6. Verify Actionable Remediation & Automated Rollback Runbook (v1.2.0)
+```bash
+curl -s https://djagjxqmso1ct.cloudfront.net/api/investigations/inv_live_001/remediation | jq '{target: .target_resource, command: .primary_command, risk: .risk_level, steps: (.steps | length), console_links: (.console_links | length)}'
+```
+*Expected: target `checkout-function`, command `aws lambda delete-function-concurrency ...`, risk `LOW`, 3 remediation steps, direct AWS Console deep-links.*
 
 
 ---
@@ -134,6 +141,7 @@ Yet when an incident strikes, **operators must mentally assemble the puzzle acro
 8. **Historical Operational Memory:** Integrates [Hindsight](https://github.com/vectorize-io/hindsight) (`retain`, `recall`, `reflect`) to retrieve past incident resolutions and pattern-match operational failure modes.
 9. **Strict Epistemic Separation:** Rigorously segregates **LIVE EVIDENCE** (ground-truth AWS telemetry) from **HISTORICAL MEMORY** (recalled prior patterns) and **INFERENCE** (calibrated hypotheses like *"Likely impact"*). Past memory provides context—it is never asserted as proof of present causality.
 10. **Amazon Bedrock AI-Native Operational Narrative:** Grounded on the deterministic Evidence Pack, ChangeLens invokes Amazon Bedrock (`amazon.nova-lite-v1:0` in `us-east-2`) to synthesize an executive-ready operational assessment. The LLM operates strictly on structured, verified evidence and cannot fabricate events, modify timestamps, or alter deterministic correlation scores. A reliable local fallback provider ensures seamless continuity if Bedrock is disabled.
+11. **Actionable Remediation & Automated Rollback Engine (v1.2.0):** Synthesizes copyable, risk-rated AWS CLI rollback procedures, verification queries, pre-flight safety checklists, and direct 1-click AWS Console deep-links (`us-east-2`) into CloudTrail, CloudWatch, Lambda, API Gateway, and DynamoDB. Eliminates operational MTTR while maintaining strict human-in-the-loop governance.
 
 ---
 
@@ -329,7 +337,7 @@ changelens/
 │   │   │   ├── aws_adapter.py         # Real CloudTrail & CloudWatch reader
 │   │   │   └── hindsight_adapter.py   # Hindsight SDK memory client
 │   │   ├── api/                       # REST route handlers
-│   │   │   └── routes.py              # /api/changes, /investigations, /stats
+│   │   │   └── routes.py              # /api/changes, /investigations, /remediation
 │   │   ├── core/                      # Intelligence engines
 │   │   │   ├── correlation.py         # Evidence-weighted scoring formula
 │   │   │   ├── evidence.py            # Evidence pack generation & SHA-256
@@ -337,17 +345,19 @@ changelens/
 │   │   ├── demo/                      # Deterministic sandbox dataset
 │   │   │   └── scenario.py            # Seed data for checkout incident
 │   │   ├── models/                    # Pydantic v2 schemas
-│   │   │   └── schemas.py             # Change, Investigation, Evidence schemas
+│   │   │   └── schemas.py             # Change, Investigation, Remediation schemas
 │   │   ├── services/                  # Orchestration services
-│   │   │   └── investigation_service.py # Live case synthesis
+│   │   │   └── investigation_service.py # Live case synthesis & rollback engine
 │   │   ├── config.py                  # Environment settings
 │   │   └── main.py                    # FastAPI application entrypoint
-│   ├── tests/                         # Pytest test suite (19 tests)
+│   ├── tests/                         # Pytest test suite (33 tests)
 │   │   ├── test_api.py                # Endpoint integration tests
+│   │   ├── test_bedrock.py            # Bedrock AI integration tests
 │   │   ├── test_correlation.py        # Scoring and BFS graph tests
 │   │   ├── test_evidence.py           # SHA-256 hash determinism tests
 │   │   ├── test_memory.py             # Memory fallback & sanitization tests
-│   │   └── test_models.py             # Pydantic schema validation tests
+│   │   ├── test_models.py             # Pydantic schema validation tests
+│   │   └── test_remediation.py        # Remediation engine & deep-link tests
 │   └── requirements.txt               # Backend dependencies
 │
 ├── frontend/                          # Next.js 14 Frontend
@@ -363,6 +373,7 @@ changelens/
 │   │   │   ├── TimelineView.tsx       # Multi-lane temporal event visualizer
 │   │   │   ├── EvidencePanel.tsx      # Cryptographic evidence artifact viewer
 │   │   │   ├── MemoryPanel.tsx        # Hindsight operational memory viewer
+│   │   │   ├── RemediationPanel.tsx   # Actionable rollback runbooks & CLI copier
 │   │   │   ├── ConsoleShell.tsx       # Topbar & sidebar navigation shell
 │   │   │   └── StatCard.tsx           # High-contrast metric cards
 │   │   └── lib/                       # Frontend utilities
@@ -373,13 +384,15 @@ changelens/
 ├── infrastructure/                    # AWS Infrastructure as Code
 │   ├── demo-workload.yaml             # CloudFormation template for checkout workload
 │   ├── lambda_function.py             # Monitored checkout Lambda handler
-│   └── dynamodb_policy.json           # Execution role policies
+│   ├── dynamodb_policy.json           # Execution role policies
+│   └── nginx.conf                     # Production reverse proxy configuration
 │
 ├── docs/                              # Supporting documentation & specs
 │   ├── BUILDER_CENTER.md              # Project design proposal & submission notes
 │   ├── REUSE_AUDIT.md                 # Architecture reuse & independence audit
 │   ├── HINDSIGHT_INTEGRATION.md       # Memory integration technical spec
 │   ├── AWS_AGENT_CONNECTION.md        # Agent telemetry and governance spec
+│   ├── REMEDIATION_ENGINE.md          # Actionable remediation & rollback spec (v1.2.0)
 │   └── screenshots/                   # Publication-grade UI screenshots
 │       ├── overview_dashboard.png
 │       ├── live_investigation.png
@@ -388,6 +401,7 @@ changelens/
 │
 └── scripts/                           # Operational scripts
     ├── run-demo.sh                    # Automated checkout traffic generator
+    ├── verify_remediation.sh          # Anti-caching & rollback validation suite
     └── update-workload-resources.py   # Workload configuration script
 ```
 
@@ -443,26 +457,40 @@ venv/bin/pytest -v
 ```
 
 ```text
-tests/test_api.py::test_health_endpoint PASSED                           [  5%]
-tests/test_api.py::test_stats_endpoint PASSED                            [ 10%]
-tests/test_api.py::test_changes_endpoints PASSED                         [ 15%]
-tests/test_api.py::test_investigations_endpoints PASSED                  [ 21%]
-tests/test_api.py::test_events_and_demo_endpoints PASSED                 [ 26%]
-tests/test_correlation.py::test_metric_severity_calculation PASSED       [ 31%]
-tests/test_correlation.py::test_temporal_proximity_calculation PASSED    [ 36%]
-tests/test_correlation.py::test_dependency_weight_same_resource PASSED   [ 42%]
-tests/test_correlation.py::test_dependency_weight_direct_dep PASSED      [ 47%]
-tests/test_correlation.py::test_dependency_path_bfs PASSED               [ 52%]
-tests/test_correlation.py::test_overall_impact_score PASSED              [ 57%]
-tests/test_evidence.py::test_evidence_pack_generation PASSED             [ 63%]
-tests/test_evidence.py::test_evidence_pack_hash_determinism PASSED       [ 68%]
-tests/test_memory.py::test_fallback_memory_provider PASSED               [ 73%]
-tests/test_memory.py::test_memory_sanitization PASSED                    [ 78%]
-tests/test_models.py::test_change_model PASSED                           [ 84%]
-tests/test_models.py::test_agent_action_model PASSED                     [ 89%]
-tests/test_models.py::test_evidence_artifact_hash PASSED                 [ 94%]
-tests/test_models.py::test_operational_memory_model PASSED               [100%]
-============================== 19 passed in 0.57s ==============================
+backend/tests/test_api.py::test_health_endpoint PASSED                   [  3%]
+backend/tests/test_api.py::test_stats_endpoint PASSED                    [  6%]
+backend/tests/test_api.py::test_changes_endpoints PASSED                 [  9%]
+backend/tests/test_api.py::test_investigations_endpoints PASSED          [ 12%]
+backend/tests/test_api.py::test_protected_mutating_endpoints_auth PASSED [ 15%]
+backend/tests/test_api.py::test_cache_control_headers PASSED             [ 18%]
+backend/tests/test_bedrock.py::test_bedrock_adapter_input_construction PASSED [ 21%]
+backend/tests/test_bedrock.py::test_bedrock_response_parsing PASSED      [ 24%]
+backend/tests/test_bedrock.py::test_bedrock_disabled_uses_fallback PASSED [ 27%]
+backend/tests/test_bedrock.py::test_bedrock_failure_reverts_to_fallback PASSED [ 30%]
+backend/tests/test_bedrock.py::test_bedrock_success_path PASSED          [ 33%]
+backend/tests/test_bedrock.py::test_score_remains_deterministic_after_narrative PASSED [ 36%]
+backend/tests/test_correlation.py::test_metric_severity_calculation PASSED [ 39%]
+backend/tests/test_correlation.py::test_temporal_proximity_calculation PASSED [ 42%]
+backend/tests/test_correlation.py::test_dependency_weight_same_resource PASSED [ 45%]
+backend/tests/test_correlation.py::test_dependency_weight_direct_dep PASSED [ 48%]
+backend/tests/test_correlation.py::test_dependency_path_bfs PASSED       [ 51%]
+backend/tests/test_correlation.py::test_overall_impact_score PASSED      [ 54%]
+backend/tests/test_correlation.py::test_review_example_formula_values PASSED [ 57%]
+backend/tests/test_correlation.py::test_temporal_proximity_distinguishes_post_change_from_pre_change PASSED [ 60%]
+backend/tests/test_correlation.py::test_verified_live_incident_chronology_and_score PASSED [ 63%]
+backend/tests/test_evidence.py::test_evidence_pack_generation PASSED     [ 66%]
+backend/tests/test_evidence.py::test_evidence_pack_hash_determinism PASSED [ 69%]
+backend/tests/test_evidence.py::test_live_evidence_pack_clean_topology_and_deduplication PASSED [ 72%]
+backend/tests/test_memory.py::test_fallback_memory_provider PASSED       [ 75%]
+backend/tests/test_memory.py::test_memory_sanitization PASSED            [ 78%]
+backend/tests/test_models.py::test_change_model PASSED                   [ 81%]
+backend/tests/test_models.py::test_agent_action_model PASSED             [ 84%]
+backend/tests/test_models.py::test_evidence_artifact_hash PASSED         [ 87%]
+backend/tests/test_models.py::test_operational_memory_model PASSED       [ 90%]
+backend/tests/test_remediation.py::test_remediation_plan_live_incident PASSED [ 93%]
+backend/tests/test_remediation.py::test_console_links_live_incident PASSED [ 96%]
+backend/tests/test_remediation.py::test_remediation_api_endpoint PASSED  [100%]
+============================== 33 passed in 1.48s ==============================
 ```
 
 ### Running Frontend Production Build

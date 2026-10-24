@@ -32,6 +32,7 @@ from app.models.core import (
     ApprovalStatus,
     BlastRadiusGraph,
     Change,
+    ConsoleLink,
     DashboardStats,
     EvidenceArtifact,
     EvidenceCategory,
@@ -42,6 +43,8 @@ from app.models.core import (
     InvestigationCase,
     NarrativeResult,
     OperationalMemory,
+    RemediationPlan,
+    RemediationStep,
     TimelineEvent,
     extract_affected_resources,
     extract_dependency_path,
@@ -50,6 +53,157 @@ from app.services.bedrock import BedrockService
 from app.services.correlation import CorrelationEngine
 
 logger = logging.getLogger(__name__)
+
+
+def build_console_links(inv: InvestigationCase) -> List[ConsoleLink]:
+    """Generate direct AWS Console deep-links for investigated resources in us-east-2."""
+    region = settings.aws_region or "us-east-2"
+    primary_res = (
+        inv.changes[0].resource_name
+        if inv.changes
+        else (inv.anomalies[0].resource_name if inv.anomalies else settings.demo_function_name)
+    )
+    return [
+        ConsoleLink(
+            title="AWS CloudTrail Event Lookup",
+            service="cloudtrail",
+            url=f"https://{region}.console.aws.amazon.com/cloudtrail/home?region={region}#/events?ResourceName={primary_res}",
+            description=f"Inspect raw AWS CloudTrail control-plane events for {primary_res} in {region}",
+        ),
+        ConsoleLink(
+            title="Amazon CloudWatch Metrics & Alarms",
+            service="cloudwatch",
+            url=f"https://{region}.console.aws.amazon.com/cloudwatch/home?region={region}#metricsV2:graph=~(metrics~(~(~'AWS*2fLambda~'Throttles~'FunctionName~'{settings.demo_function_name})~(~'AWS*2fLambda~'Errors~'FunctionName~'{settings.demo_function_name})))",
+            description=f"Monitor real-time throttling and error telemetry on {settings.demo_function_name}",
+        ),
+        ConsoleLink(
+            title="AWS Lambda Concurrency Settings",
+            service="lambda",
+            url=f"https://{region}.console.aws.amazon.com/lambda/home?region={region}#/functions/{settings.demo_function_name}?tab=configure",
+            description=f"View and modify concurrency quotas on {settings.demo_function_name}",
+        ),
+        ConsoleLink(
+            title="Amazon API Gateway Stage Console",
+            service="apigateway",
+            url=f"https://{region}.console.aws.amazon.com/apigateway/main/apis/pihaacms70/resources?region={region}",
+            description="Inspect API Gateway routes and integration throttling behavior",
+        ),
+        ConsoleLink(
+            title="Amazon DynamoDB Table Console",
+            service="dynamodb",
+            url=f"https://{region}.console.aws.amazon.com/dynamodbv2/home?region={region}#table?name={settings.demo_table_name}",
+            description=f"View capacity, latency, and items for {settings.demo_table_name}",
+        ),
+    ]
+
+
+def build_remediation_plan(inv: InvestigationCase) -> RemediationPlan:
+    """Generate actionable CLI remediation runbook and pre-flight safety verification."""
+    region = settings.aws_region or "us-east-2"
+    console_links = build_console_links(inv)
+    now = datetime.now(timezone.utc)
+
+    change_action = inv.changes[0].action if inv.changes else "PutFunctionConcurrency"
+    target_res = inv.changes[0].resource_name if inv.changes else settings.demo_function_name
+
+    if "Concurrency" in change_action or "checkout-function" in target_res:
+        primary_cmd = f"aws lambda delete-function-concurrency --function-name {target_res} --region {region}"
+        verify_cmd = f"aws lambda get-function-concurrency --function-name {target_res} --region {region}"
+        summary = (
+            f"Rollback reserved concurrency restriction on {target_res} to restore unreserved capacity pool. "
+            "Removes execution starvation causing downstream 5XX error cascade."
+        )
+        steps = [
+            RemediationStep(
+                step_number=1,
+                title="Verify Active Throttling Telemetry",
+                action="Query CloudWatch Throttles metric across a 5-minute sliding window.",
+                command=f"aws cloudwatch get-metric-statistics --namespace AWS/Lambda --metric-name Throttles --dimensions Name=FunctionName,Value={target_res} --period 60 --statistics Sum --start-time {now.strftime('%Y-%m-%dT%H:00:00Z')} --end-time {now.strftime('%Y-%m-%dT%H:%M:00Z')} --region {region}",
+                target_resource=target_res,
+                expected_result="Confirm Throttles sum > 0 correlates with recent concurrency reduction.",
+                safety_check="Ensure traffic volume is authentic and not a malicious flood.",
+            ),
+            RemediationStep(
+                step_number=2,
+                title="Execute Concurrency Rollback",
+                action=f"Release reserved concurrency cap of 1 on {target_res}.",
+                command=primary_cmd,
+                target_resource=target_res,
+                expected_result="HTTP 200 OK with empty payload confirming concurrency limit is deleted.",
+                safety_check="Pre-flight check: Verify regional unreserved concurrency pool has >= 100 available units.",
+            ),
+            RemediationStep(
+                step_number=3,
+                title="Verify Concurrency Quota Release",
+                action="Confirm reserved concurrency allocation has been purged from function configuration.",
+                command=verify_cmd,
+                target_resource=target_res,
+                expected_result="Return empty object {} confirming unreserved shared pool usage.",
+                safety_check="Confirm no other functions in the account are consuming regional concurrency limits.",
+            ),
+            RemediationStep(
+                step_number=4,
+                title="Monitor Downstream Telemetry Normalization",
+                action="Verify API Gateway 5XX errors and Lambda errors return to 0.0 baseline.",
+                command=f"aws cloudwatch get-metric-statistics --namespace AWS/ApiGateway --metric-name 5XXError --dimensions Name=ApiName,Value=changelens-checkout-api --period 60 --statistics Sum --start-time {now.strftime('%Y-%m-%dT%H:00:00Z')} --end-time {now.strftime('%Y-%m-%dT%H:%M:00Z')} --region {region}",
+                target_resource="changelens-checkout-api",
+                expected_result="5XXError and Lambda Errors drop back to 0 within 60 seconds.",
+                safety_check="Ensure order transactions resume in DynamoDB checkout-table without latency surge.",
+            ),
+        ]
+        checklist = [
+            f"Pre-flight: Confirm target resource {target_res} in region {region}",
+            "Capacity: Verify downstream DynamoDB table capacity can absorb burst requests",
+            "Security: Validate rollback initiator is authorized via IAM role ChangeLens-EC2-Role",
+            "Audit: Retain incident postmortem and remediation artifact in Hindsight operational memory",
+        ]
+        action_type = "concurrency_rollback"
+        risk_level = "LOW"
+    else:
+        primary_cmd = f"aws lambda get-function-configuration --function-name {target_res} --region {region}"
+        verify_cmd = f"aws cloudwatch describe-alarms --state-value ALARM --region {region}"
+        summary = f"Inspect and revert recent configuration changes on {target_res} to restore baseline telemetry."
+        steps = [
+            RemediationStep(
+                step_number=1,
+                title="Inspect Current Configuration",
+                action=f"Audit active settings on {target_res}.",
+                command=primary_cmd,
+                target_resource=target_res,
+                expected_result="Configuration attributes retrieved.",
+                safety_check="Verify production tags and IAM permissions.",
+            ),
+            RemediationStep(
+                step_number=2,
+                title="Verify System Alarms",
+                action="Check all active alarms in region.",
+                command=verify_cmd,
+                target_resource=target_res,
+                expected_result="List active alarm state across monitored services.",
+                safety_check="Ensure alarm criteria are aligned with current SLO thresholds.",
+            ),
+        ]
+        checklist = [
+            f"Confirm target resource {target_res}",
+            "Verify IAM authorization",
+            "Record postmortem in operational memory bank",
+        ]
+        action_type = "configuration_revert"
+        risk_level = "MEDIUM"
+
+    return RemediationPlan(
+        investigation_id=inv.id,
+        target_resource=target_res,
+        action_type=action_type,
+        risk_level=risk_level,
+        summary=summary,
+        primary_command=primary_cmd,
+        verification_command=verify_cmd,
+        steps=steps,
+        safety_checklist=checklist,
+        console_links=console_links,
+        generated_at=now,
+    )
 
 
 class InvestigationService:
@@ -310,9 +464,23 @@ class InvestigationService:
         """Retrieve full details of an investigation."""
         await self._sync_live_aws_data()
         inv = self._investigations.get(investigation_id)
-        if inv and inv.ai_narrative is None:
-            await self.get_investigation_narrative(investigation_id)
+        if inv:
+            if inv.ai_narrative is None:
+                await self.get_investigation_narrative(investigation_id)
+            if inv.remediation_plan is None:
+                inv.remediation_plan = build_remediation_plan(inv)
+            if not inv.console_links:
+                inv.console_links = build_console_links(inv)
         return inv
+
+    async def get_remediation(self, investigation_id: str) -> Optional[RemediationPlan]:
+        """Retrieve or generate actionable remediation plan and rollback procedure."""
+        inv = await self.get_investigation(investigation_id)
+        if not inv:
+            return None
+        if not inv.remediation_plan:
+            inv.remediation_plan = build_remediation_plan(inv)
+        return inv.remediation_plan
 
     async def get_investigation_narrative(
         self, investigation_id: str, force_refresh: bool = False
@@ -502,6 +670,8 @@ class InvestigationService:
             impact_score=inv.impact_score,
             evidence_refs=inv.evidence,
             recommended_actions=inv.recommended_actions,
+            remediation_plan=build_remediation_plan(inv),
+            console_links=build_console_links(inv),
             s3_key=f"evidence-packs/{inv.id}/{now.strftime('%Y%m%d_%H%M%S')}.json",
         )
 

@@ -170,6 +170,38 @@ export interface NarrativeResult {
   generated_at: string;
 }
 
+export interface ConsoleLink {
+  title: string;
+  service: string;
+  url: string;
+  description: string;
+}
+
+export interface RemediationStep {
+  step_number: number;
+  title: string;
+  action: string;
+  command?: string;
+  target_resource: string;
+  expected_result: string;
+  safety_check: string;
+}
+
+export interface RemediationPlan {
+  id: string;
+  investigation_id: string;
+  target_resource: string;
+  action_type: string;
+  risk_level: string;
+  summary: string;
+  primary_command: string;
+  verification_command: string;
+  steps: RemediationStep[];
+  safety_checklist: string[];
+  console_links: ConsoleLink[];
+  generated_at: string;
+}
+
 export interface InvestigationCase {
   id: string;
   title: string;
@@ -195,6 +227,8 @@ export interface InvestigationCase {
   current_window_anomalies_count?: number;
   ai_narrative?: NarrativeResult;
   ai_narrative_provider?: string;
+  remediation_plan?: RemediationPlan;
+  console_links?: ConsoleLink[];
 }
 
 export interface DashboardStats {
@@ -247,6 +281,8 @@ export interface EvidencePack {
   impact_score?: ImpactScore;
   evidence_refs: EvidenceArtifact[];
   recommended_actions: string[];
+  remediation_plan?: RemediationPlan;
+  console_links?: ConsoleLink[];
   content_hash?: string;
   s3_key?: string;
 }

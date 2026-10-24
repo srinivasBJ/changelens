@@ -2,7 +2,7 @@
 
 **Project:** ChangeLens  
 **Tagline:** AWS Change Impact & Operational Memory  
-**Edition:** AWS Builder Center — Zero to Shipped (October 2026)  
+**Edition:** AWS Builder Center — Zero to Shipped (Updated: October 24, 2026 · Release v1.2.0)  
 
 ---
 
@@ -54,6 +54,8 @@ flowchart TD
         GRAPH[Blast-Radius Dependency Graph]
         EVID_PANEL[Verified Evidence Panel]
         MEM_PANEL[Historical Operational Memory]
+        REMED_PANEL[Actionable Remediation & Rollback Runbook]
+        CONSOLE_LINKS[AWS Console Deep-Links]
         PACK_EXPORT[Evidence Pack Generator]
     end
 
@@ -62,6 +64,8 @@ flowchart TD
     CASE --> GRAPH
     CASE --> EVID_PANEL
     CASE --> MEM_PANEL
+    CASE --> REMED_PANEL
+    CASE --> CONSOLE_LINKS
     CASE --> PACK_EXPORT
     PACK_EXPORT -->|Export Report| S3_PACKS
 ```

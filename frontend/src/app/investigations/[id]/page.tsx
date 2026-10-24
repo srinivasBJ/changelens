@@ -12,6 +12,7 @@ import {
   Network,
   RotateCw,
   ShieldCheck,
+  Wrench,
 } from 'lucide-react';
 import {
   createEvidencePack,
@@ -37,6 +38,7 @@ import { TimelineView } from '@/components/TimelineView';
 import { BlastRadiusGraph } from '@/components/BlastRadiusGraph';
 import { EvidencePanel } from '@/components/EvidencePanel';
 import { MemoryPanel } from '@/components/MemoryPanel';
+import { RemediationPanel } from '@/components/RemediationPanel';
 
 export default function InvestigationDetailPage() {
   const params = useParams();
@@ -47,7 +49,7 @@ export default function InvestigationDetailPage() {
   const [graph, setGraph] = useState<GraphType | null>(null);
   const [evidence, setEvidence] = useState<EvidenceArtifact[]>([]);
   const [memories, setMemories] = useState<OperationalMemory[]>([]);
-  const [activeTab, setActiveTab] = useState<'graph' | 'timeline' | 'evidence' | 'memory'>('graph');
+  const [activeTab, setActiveTab] = useState<'graph' | 'timeline' | 'evidence' | 'memory' | 'remediation'>('graph');
   const [loading, setLoading] = useState(true);
   const [pack, setPack] = useState<EvidencePack | null>(null);
   const [generatingPack, setGeneratingPack] = useState(false);
@@ -443,6 +445,17 @@ export default function InvestigationDetailPage() {
             <BrainCircuit className={`w-4 h-4 ${activeTab === 'memory' ? 'text-[#FFFFFF]' : 'text-[#D29922]'}`} />
             <span>Operational Memory ({memories.length})</span>
           </button>
+          <button
+            onClick={() => setActiveTab('remediation')}
+            className={`h-[40px] px-4 rounded-t-[6px] text-[13px] font-sans transition-colors duration-150 flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#58A6FF] ${
+              activeTab === 'remediation'
+                ? 'bg-[#2F6FAD] text-[#FFFFFF] font-semibold border-b-2 border-[#58A6FF]'
+                : 'bg-transparent text-[#71717A] hover:text-[#ECECEC] hover:bg-[#232327]'
+            }`}
+          >
+            <Wrench className={`w-4 h-4 ${activeTab === 'remediation' ? 'text-[#FFFFFF]' : 'text-[#58A6FF]'}`} />
+            <span>Rollback Runbook</span>
+          </button>
         </div>
 
         {/* Tab Workspace */}
@@ -451,6 +464,12 @@ export default function InvestigationDetailPage() {
           {activeTab === 'timeline' && <TimelineView events={timeline} />}
           {activeTab === 'evidence' && <EvidencePanel evidence={evidence} />}
           {activeTab === 'memory' && <MemoryPanel memories={memories} />}
+          {activeTab === 'remediation' && (
+            <RemediationPanel
+              plan={inv.remediation_plan}
+              fallbackResource={inv.changes[0]?.resource_name || 'checkout-function'}
+            />
+          )}
         </div>
       </div>
 

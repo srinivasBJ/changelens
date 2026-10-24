@@ -9,9 +9,9 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -248,6 +248,41 @@ class NarrativeResult(BaseModel):
     generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
+class ConsoleLink(BaseModel):
+    """Direct deep-link to an AWS Console service resource."""
+    title: str
+    service: str  # cloudtrail, cloudwatch, lambda, apigateway, dynamodb
+    url: str
+    description: str
+
+
+class RemediationStep(BaseModel):
+    """Step in an operational remediation procedure."""
+    step_number: int
+    title: str
+    action: str
+    command: Optional[str] = None
+    target_resource: str
+    expected_result: str
+    safety_check: str
+
+
+class RemediationPlan(BaseModel):
+    """Actionable remediation and rollback plan generated for an operational investigation."""
+    id: str = Field(default_factory=lambda: f"rem_{uuid.uuid4().hex[:12]}")
+    investigation_id: str
+    target_resource: str
+    action_type: str  # concurrency_rollback, capacity_restore, configuration_revert
+    risk_level: str = "LOW"  # LOW, MEDIUM, HIGH
+    summary: str
+    primary_command: str
+    verification_command: str
+    steps: List[RemediationStep] = Field(default_factory=list)
+    safety_checklist: List[str] = Field(default_factory=list)
+    console_links: List[ConsoleLink] = Field(default_factory=list)
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
 class InvestigationCase(BaseModel):
     """A complete investigation case tying changes to impacts with evidence."""
     id: str = Field(default_factory=lambda: f"inv_{uuid.uuid4().hex[:12]}")
@@ -274,6 +309,8 @@ class InvestigationCase(BaseModel):
     current_window_anomalies_count: int = 0
     ai_narrative: Optional[NarrativeResult] = None
     ai_narrative_provider: Optional[str] = None
+    remediation_plan: Optional[RemediationPlan] = None
+    console_links: List[ConsoleLink] = Field(default_factory=list)
 
 
 # --- Response Models ---
@@ -333,6 +370,8 @@ class EvidencePack(BaseModel):
     impact_score: Optional[ImpactScore] = None
     evidence_refs: List[EvidenceArtifact] = Field(default_factory=list)
     recommended_actions: List[str] = Field(default_factory=list)
+    remediation_plan: Optional[RemediationPlan] = None
+    console_links: List[ConsoleLink] = Field(default_factory=list)
     content_hash: Optional[str] = None  # SHA-256 of the full pack
     s3_key: Optional[str] = None
 

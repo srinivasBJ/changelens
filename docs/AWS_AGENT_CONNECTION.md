@@ -4,7 +4,7 @@
 **Hackathon:** AWS Builder Center — Zero to Shipped (October 2026)  
 **Autonomous Coding Agent:** Google Antigravity (DeepMind Advanced Agentic Coding)  
 **Primary Region:** `us-east-2` (Ohio)  
-**Verification Date:** October 2–3, 2026  
+**Verification Date:** October 24, 2026 (v1.2.0 Remediation & Deep-Links Release)  
 
 ---
 
